@@ -25,7 +25,7 @@ export default function AppointmentForm({ selectedHostelId }) {
 
   const fetchHostels = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/admin/all')
+      const response = await fetch('/api/admin/all')
       const data = await response.json()
       if (data.status === 'success') {
         setHostels(data.data)
