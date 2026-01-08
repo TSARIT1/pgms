@@ -1,0 +1,141 @@
+Live API Key : rzp_live_Rz8vO7gI0lkWTk
+
+Live Key Secret : eoF7UrrVeVZD3JTSzd9k5KD5
+
+
+smtp email password : vepr ezog wvrg jbog
+
+
+
+
+
+
+
+spring.application.name=pgm_Backend
+
+# ===============================
+# SERVER CONFIGURATION
+# ===============================
+server.port=8080
+server.servlet.context-path=/
+
+# ===============================
+# DATABASE CONFIGURATION (MySQL)
+# ===============================
+spring.datasource.url=jdbc:mysql://localhost:3306/pgms?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+spring.datasource.username=root
+spring.datasource.password=Tsarit@12345
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# ===============================
+# JPA / HIBERNATE CONFIGURATION
+# ===============================
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.open-in-view=false
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.use_sql_comments=true
+
+# ===============================
+# LOGGING
+# ===============================
+logging.level.root=INFO
+logging.level.com.pgm=DEBUG
+logging.level.org.springframework.web=INFO
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+
+# ===============================
+# JACKSON (JSON)
+# ===============================
+spring.jackson.default-property-inclusion=non_null
+spring.jackson.time-zone=UTC
+
+# ===============================
+# VALIDATION
+# ===============================
+spring.validation.enabled=true
+
+
+
+
+# ===============================
+# VALIDATION
+# ===============================
+spring.validation.enabled=true
+
+# ===============================
+# CORS CONFIGURATION
+# ===============================
+web.cors.allowed-origins=http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://localhost:5175,http:/>web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS
+web.cors.allowed-headers=*
+
+# ===============================
+# FILE UPLOAD
+# ===============================
+spring.servlet.multipart.enabled=true
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+spring.servlet.multipart.file-size-threshold=2KB
+
+server.tomcat.max-http-form-post-size=10MB
+server.tomcat.max-swallow-size=10MB
+server.tomcat.max-file-count=50
+server.tomcat.max-part-count=50
+
+# ===============================
+# EMAIL (GMAIL SMTP)
+# ===============================
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=tsaritservices@gmail.com
+spring.mail.password=vepr ezog wvrg jbog
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
+spring.mail.properties.mail.smtp.ssl.trust=smtp.gmail.com
+spring.mail.properties.mail.smtp.connectiontimeout=30000
+spring.mail.properties.mail.smtp.timeout=30000
+spring.mail.properties.mail.smtp.writetimeout=30000
+spring.mail.properties.mail.debug=false
+
+# ===============================
+# OTP
+
+
+
+# ===============================
+# OTP
+# ===============================
+otp.expiry.minutes=10
+
+# ===============================
+# RAZORPAY
+# ===============================
+razorpay.key.id=rzp_live_Rz8vO7gI0lkWTk
+razorpay.key.secret=eoF7UrrVeVZD3JTSzd9k5KD5
+razorpay.currency=INR
+
+# ===============================
+# GOOGLE MAPS (REQUIRED)
+# ==============================
+google.maps.api.key=AIzaSyC0OVpOWX8xCYi4eKUw46-rEpSWMrCjwMA
+
+#===============================
+#
+management.endpoints.web.exposure.include=health,info
+management.endpoint.health.show-details=always
+
+#===============================
+
+
+
+
+
+
+^G Help        ^O Write Out   ^W Where Is    ^K Cut         ^T Execute     ^C Location    M-U Undo       M-A Set Mark
+^X Exit        ^R Read File   ^\ Replace
+
+
+sshpass -p 'Tsarit@12345' ssh root@103.189.89.190 -p 2222

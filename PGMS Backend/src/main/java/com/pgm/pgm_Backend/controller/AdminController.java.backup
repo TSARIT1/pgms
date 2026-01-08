@@ -1,0 +1,284 @@
+package com.pgm.pgm_Backend.controller;
+
+import com.pgm.pgm_Backend.model.Admin;
+import com.pgm.pgm_Backend.service.AdminService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/admin")
+@RequiredArgsConstructor
+@CrossOrigin("*")
+public class AdminController {
+
+    private final AdminService adminService;
+    private final org.springframework.security.authentication.AuthenticationManager authenticationManager;
+    private final com.pgm.pgm_Backend.utils.JwtUtils jwtUtils;
+    private final com.pgm.pgm_Backend.service.impl.CustomUserDetailsService userDetailsService;
+    private final com.pgm.pgm_Backend.service.OtpService otpService;
+    Map<String, Object> response = new HashMap<>();response.put("status","error");response.put("message",e.getMessage());return ResponseEntity.badRequest().body(response);
+    }}
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestParam String email, @RequestParam String password) {
+        try {
+            authenticationManager.authenticate(
+                    new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(email,
+                            password));
+
+            final org.springframework.security.core.userdetails.UserDetails userDetails = userDetailsService
+                    .loadUserByUsername(email);
+            final String jwt = jwtUtils.generateToken(userDetails.getUsername());
+            Admin admin = adminService.login(email, password); // We can still call this to get Admin object, or just
+                                                               // fetch by email. Service login checks password again
+                                                               // which is redundant but safe.
+            // Better: just fetch admin by email since we already authenticated.
+            // But Service.login is simple enough.
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Login successful");
+            response.put("token", jwt);
+            response.put("data", admin);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", "Invalid email or password");
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getAdmin(@PathVariable Long id) {
+        try {
+            Admin admin = adminService.getById(id);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Admin retrieved successfully");
+            response.put("data", admin);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateAdmin(@PathVariable Long id, @Valid @RequestBody Admin admin) {
+        try {
+            Admin updatedAdmin = adminService.updateAdmin(id, admin);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Admin updated successfully");
+            response.put("data", updatedAdmin);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteAdmin(@PathVariable Long id) {
+        try {
+            adminService.deleteAdmin(id);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Admin deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile() {
+        try {
+            Admin admin = adminService.getProfile();
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Profile retrieved successfully");
+            response.put("data", admin);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+    }
+
+    @PostMapping("/profile/photo")
+    public ResponseEntity<?> uploadPhoto(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            // Validate file
+            if (file.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("status", "error");
+                response.put("message", "Please select a file to upload");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Validate file type
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("status", "error");
+                response.put("message", "Only image files are allowed");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            String photoUrl = adminService.uploadPhoto(file);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Photo uploaded successfully");
+            response.put("photoUrl", photoUrl);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @DeleteMapping("/profile/photo")
+    public ResponseEntity<?> deletePhoto() {
+        try {
+            adminService.deletePhoto();
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Photo deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // OTP-based Password Reset Endpoints
+
+    @PostMapping("/send-otp")
+    public ResponseEntity<?> sendOtp(@RequestParam String email) {
+        try {
+            // Find admin by email
+            Admin admin = adminService.getByEmail(email);
+            if (admin == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("status", "error");
+                response.put("message", "Admin not found with this email");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Generate and send OTP
+            otpService.generateAndSendOtp(email, admin.getName());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "OTP sent to your email successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", "Failed to send OTP: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestParam String email, @RequestParam String otp) {
+        try {
+            boolean isValid = otpService.verifyOtp(email, otp);
+
+            if (isValid) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("status", "success");
+                response.put("message", "OTP verified successfully");
+                response.put("verified", true);
+                return ResponseEntity.ok(response);
+            } else {
+                Map<String, Object> response = new HashMap<>();
+                response.put("status", "error");
+                response.put("message", "Invalid or expired OTP");
+                response.put("verified", false);
+                return ResponseEntity.badRequest().body(response);
+            }
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", "Failed to verify OTP: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestParam String email,
+            @RequestParam String newPassword,
+            @RequestParam String otp) {
+        try {
+            // Check if OTP was already verified (don't verify again as it would fail)
+            boolean isValid = otpService.isOtpVerified(email, otp);
+            if (!isValid) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("status", "error");
+                response.put("message", "Invalid or expired OTP");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Reset password
+            Admin admin = adminService.resetPassword(email, newPassword);
+
+            // Send confirmation email
+            emailService.sendPasswordResetConfirmation(email, admin.getName());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Password reset successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", "Failed to reset password: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllAdmins() {
+        try {
+            java.util.List<Admin> admins = adminService.getAllAdmins();
+
+            // Return simplified admin data (id and name only)
+            java.util.List<Map<String, Object>> adminList = admins.stream()
+                    .map(admin -> {
+                        Map<String, Object> adminData = new HashMap<>();
+                        adminData.put("id", admin.getId());
+                        adminData.put("name", admin.getName());
+                        return adminData;
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("data", adminList);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", "Failed to fetch admins: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+}
