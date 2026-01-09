@@ -28,7 +28,7 @@ export const deletePlan = async (id) => {
 
 export const togglePlanStatus = async (id) => {
     // PATCH is not in apiHelper, so we'll use a custom fetch
-    const response = await fetch(`http://localhost:8080/api/subscription-plans/${id}/toggle`, {
+    const response = await fetch(`/api/api/subscription-plans/${id}/toggle`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',

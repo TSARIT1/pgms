@@ -1877,7 +1877,7 @@ export default function LandingPage() {
                   }}
                 >
                   <img
-                    src={`http://localhost:8080${photo}`}
+                    src={`/api${photo}`}
                     alt={`${selectedHostelName} ${index + 1}`}
                     style={{
                       width: '100%',

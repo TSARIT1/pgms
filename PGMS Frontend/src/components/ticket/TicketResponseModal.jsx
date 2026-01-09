@@ -242,7 +242,7 @@ export default function TicketResponseModal({ isOpen, onClose, ticket, onSuccess
               {ticket.attachmentUrl && (
                 <div style={{ marginTop: '1rem' }}>
                   <a
-                    href={`http://localhost:8080${ticket.attachmentUrl}`}
+                    href={`/api${ticket.attachmentUrl}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{

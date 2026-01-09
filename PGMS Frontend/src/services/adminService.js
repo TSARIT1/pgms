@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/api';
 
 // Login Admin
 export const loginAdmin = async (email, password) => {
@@ -85,7 +85,7 @@ export const uploadAdminPhoto = async (file) => {
   // Get JWT token from localStorage
   const token = localStorage.getItem('token');
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/admin/profile/photo`, {
+  const response = await fetch(`${import.meta.env.VITE_API_URL || '/api/api'}/admin/profile/photo`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -106,7 +106,7 @@ export const deleteAdminPhoto = async () => {
   // Get JWT token from localStorage
   const token = localStorage.getItem('token');
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/admin/profile/photo`, {
+  const response = await fetch(`${import.meta.env.VITE_API_URL || '/api/api'}/admin/profile/photo`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -217,7 +217,7 @@ export const uploadHostelPhoto = async (file) => {
   // Get JWT token from localStorage
   const token = localStorage.getItem('token');
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/admin/profile/hostel-photo`, {
+  const response = await fetch(`${import.meta.env.VITE_API_URL || '/api/api'}/admin/profile/hostel-photo`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,

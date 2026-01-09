@@ -219,7 +219,7 @@ export default function AdminProfileDropdown({ onLogout, placement = 'navbar' })
   const getPhotoUrl = () => {
     if (photoPreview) return photoPreview
     if (adminData?.photoUrl) {
-      return `http://localhost:8080${adminData.photoUrl}`
+      return `/api${adminData.photoUrl}`
     }
     return '/images/default-avatar.png'
   }

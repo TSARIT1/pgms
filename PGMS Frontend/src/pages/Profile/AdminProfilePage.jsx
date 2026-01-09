@@ -340,7 +340,7 @@ export default function AdminProfilePage() {
   const getPhotoUrl = () => {
     if (photoPreview) return photoPreview
     if (adminData?.photoUrl) {
-      return `http://localhost:8080${adminData.photoUrl}`
+      return `/api${adminData.photoUrl}`
     }
     return '/images/default-avatar.png'
   }
@@ -727,7 +727,7 @@ export default function AdminProfilePage() {
                 <div className="hostel-photos-grid">
                   {hostelPhotos.map((photo, index) => (
                     <div key={index} className="hostel-photo-item">
-                      <img src={`http://localhost:8080${photo}`} alt={`Hostel ${index + 1}`} />
+                      <img src={`/api${photo}`} alt={`Hostel ${index + 1}`} />
                       {isEditMode && (
                         <button
                           className="delete-photo-btn"
