@@ -138,7 +138,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:8080/api/admin/profile', {
+      const response = await fetch('/api/admin/profile', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
