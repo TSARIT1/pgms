@@ -89,7 +89,7 @@
   .grid-5 {
     grid-template-columns: repeat(3, 1fr);
   }
-  
+
   .grid-4 {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -99,17 +99,17 @@
   .sidebar-container {
     width: 200px;
   }
-  
+
   .main-content-wrapper {
     margin-left: 200px;
     width: calc(100% - 200px);
   }
-  
+
   .grid-5,
   .grid-4 {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .grid-3 {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -122,23 +122,23 @@
     width: 100%;
     max-width: 250px;
   }
-  
+
   .sidebar-container.active {
     transform: translateX(0);
   }
-  
+
   .main-content-wrapper {
     margin-left: 0;
     width: 100%;
   }
-  
+
   .grid-5,
   .grid-4,
   .grid-3,
   .grid-2 {
     grid-template-columns: 1fr;
   }
-  
+
   .content-area {
     padding: var(--spacing-lg);
   }

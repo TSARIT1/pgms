@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FiSearch, FiArrowLeft, FiAlertCircle, FiDownload } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
-import { getAllStudents } from '../../services/studentService'
+import { getAllStudentsIncludingDeleted } from '../../services/studentService'
 import { getAllRooms } from '../../services/roomService'
 import paymentService from '../../services/paymentService'
 import { useTranslation } from 'react-i18next'
@@ -26,7 +26,7 @@ export default function DueSummaryReportPage() {
     try {
       setLoading(true)
       const [studentsResp, roomsResp, paymentsResp] = await Promise.all([
-        getAllStudents(),
+        getAllStudentsIncludingDeleted(),
         getAllRooms(),
         paymentService.getAllPayments()
       ])

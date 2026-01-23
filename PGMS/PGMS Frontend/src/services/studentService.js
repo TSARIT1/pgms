@@ -1,5 +1,5 @@
 // Student API Service
-import { apiGet, apiPost, apiPut, apiDelete, replacePathParams } from './apiHelper';
+import { apiGet, apiPost, apiPut, apiPatch, apiDelete, replacePathParams } from './apiHelper';
 import { API_ENDPOINTS } from './apiConfig';
 
 // Get all students
@@ -39,4 +39,10 @@ export const deleteStudent = async (id) => {
 export const getStudentsByStatus = async (status) => {
     const endpoint = replacePathParams(API_ENDPOINTS.TENANTS_BY_STATUS, { status });
     return apiGet(endpoint);
+};
+
+// Update student status
+export const updateStudentStatus = async (id, status) => {
+    const endpoint = `/tenants/${id}/status`;
+    return apiPatch(endpoint, null, { status });
 };

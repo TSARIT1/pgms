@@ -22,6 +22,10 @@ export default function PaymentListPage() {
   const [editingPayment, setEditingPayment] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  
+  // Month and Year for Due Summary
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
   const mapPaymentToRow = (p) => ({
     PaymentID: p.id || p.PaymentID || '',
@@ -57,46 +61,48 @@ export default function PaymentListPage() {
     loadData()
   }, [])
 
-  // Calculate Dues Summary
+  // Calculate Dues Summary (Cumulative Balance)
   const calculateDues = () => {
-    const currentMonth = new Date().getMonth()
-    const currentYear = new Date().getFullYear()
+    const targetMonth = Number(selectedMonth)
+    const targetYear = Number(selectedYear)
 
     return students.map(student => {
       // Find assigned room to get rent
       const assignedRoom = rooms.find(r => r.roomNumber === student.roomNumber)
       const rentAmount = assignedRoom ? assignedRoom.rent : 0
 
-      // Calculate total paid by student in current month
-      const totalPaid = payments.reduce((sum, p) => {
-        // Handle both raw backend field or mapped row field
-        const pDateStr = p.__raw ? p.__raw.paymentDate : (p.paymentDate || p.Date)
-        const pDate = new Date(pDateStr)
+      // Calculate total months from joining until the selected month
+      let totalMonths = 1
+      if (student.joiningDate) {
+        const joinDate = new Date(student.joiningDate)
+        const diffYears = targetYear - joinDate.getFullYear()
+        const diffMonths = (diffYears * 12) + (targetMonth - joinDate.getMonth())
+        totalMonths = Math.max(1, diffMonths + 1)
+      }
+
+      const totalOwed = totalMonths * rentAmount
+
+      // Sum of ALL payments ever made by this student
+      const totalPaidEver = payments.reduce((sum, p) => {
         const pStudent = p.__raw ? p.__raw.student : (p.student || p.Candidate)
-        
-        if (
-          pStudent === student.name &&
-          pDate.getMonth() === currentMonth &&
-          pDate.getFullYear() === currentYear
-        ) {
-          // Get amount from raw data or mapped field
+        if (pStudent === student.name) {
           const amount = p.__raw ? p.__raw.amount : (p.amount || Number(p.Amount) || 0)
           return sum + Number(amount)
         }
         return sum
       }, 0)
 
-      const due = rentAmount - totalPaid
+      const balance = totalOwed - totalPaidEver
 
       return {
         Candidate: student.name,
-        Room: student.roomNumber,
-        Rent: rentAmount,
-        Paid: totalPaid,
-        Due: due > 0 ? due : 0, 
+        Room: student.roomNumber || 'Not Assigned',
+        'Monthly Rent': rentAmount,
+        'Total Paid': totalPaidEver,
+        'Outstanding Due': balance > 0 ? balance : 0, 
         Email: student.email
       }
-    }).filter(record => record.Rent > 0) // Show all students with rent assigned
+    }).filter(record => record['Monthly Rent'] > 0)
   }
 
   const duesSummary = calculateDues()
@@ -357,7 +363,7 @@ export default function PaymentListPage() {
   }
 
   const paymentColumns = ['PaymentID', 'Candidate', 'Amount', 'GST%', 'Type', 'Date', 'Method']
-  const dueColumns = ['Candidate', 'Room', 'Rent', 'Paid', 'Due', 'Email']
+  const dueColumns = ['Candidate', 'Room', 'Monthly Rent', 'Total Paid', 'Outstanding Due', 'Email']
 
 
 
@@ -540,22 +546,47 @@ export default function PaymentListPage() {
         />
       </motion.div>
 
-      {/* Due Summary */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
+        style={{ marginTop: '3rem', background: '#fff', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #e5e7eb' }}
       >
-        <h3 style={{
-          marginBottom: '1rem',
-          marginTop: '2rem',
-          textAlign: 'center',
-          color: '#ef4444',
-          fontSize: '1.25rem',
-          fontWeight: '600'
-        }}>
-          {t('payments.currentMonthDue')}
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <h3 style={{
+            margin: 0,
+            color: '#ef4444',
+            fontSize: '1.25rem',
+            fontWeight: '600'
+          }}>
+            {t('payments.currentMonthDue')}
+          </h3>
+          
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <select 
+              value={selectedMonth} 
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              style={{ padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid #d1d5db', outline: 'none' }}
+            >
+              {[
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+              ].map((m, idx) => (
+                <option key={m} value={idx}>{m}</option>
+              ))}
+            </select>
+            <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(e.target.value)}
+              style={{ padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid #d1d5db', outline: 'none' }}
+            >
+              {[2024, 2025, 2026, 2027].map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        
         <DataTable
           columns={dueColumns}
           data={duesSummary}

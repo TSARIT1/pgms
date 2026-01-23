@@ -25,7 +25,13 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public List<Payment> getAllPayments() {
         Long adminId = adminContextUtil.getCurrentAdminId();
-        return dynamicPaymentRepository.findAll(adminId);
+        return dynamicPaymentRepository.findAll(adminId, false);
+    }
+
+    @Override
+    public List<Payment> getAllPayments(boolean includeDeleted) {
+        Long adminId = adminContextUtil.getCurrentAdminId();
+        return dynamicPaymentRepository.findAll(adminId, includeDeleted);
     }
 
     @Override

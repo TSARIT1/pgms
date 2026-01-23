@@ -12,31 +12,30 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Room {
 
-    private Long id;
+	private Long id;
 
-    @NotBlank(message = "Room number cannot be blank")
-    private String roomNumber;
+	@NotBlank(message = "Room number cannot be blank")
+	private String roomNumber;
 
-    @Min(value = 1, message = "Capacity must be at least 1")
-    private Integer capacity;
+	private Integer capacity;
 
-    @Min(value = 0, message = "Occupied beds cannot be negative")
-    private Integer occupiedBeds;
+	@Min(value = 0, message = "Occupied beds cannot be negative")
+	private Integer occupiedBeds;
 
-    // JSON array storing occupied bed numbers, e.g., "[1,3,5]"
-    private String occupiedBedNumbers;
+	// JSON array storing occupied bed numbers, e.g., "[1,3,5]"
+	private String occupiedBedNumbers;
 
-    @DecimalMin(value = "0.0", inclusive = false, message = "Rent must be greater than 0")
-    @NotNull(message = "Rent cannot be null")
-    private Double rent;
+	@DecimalMin(value = "0.0", inclusive = false, message = "Rent must be greater than 0")
+	@NotNull(message = "Rent cannot be null")
+	private Double rent;
 
-    private String status;
+	private String status;
 
-    private String description;
+	private String description;
 
-    private LocalDateTime createdAt;
+	private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+	private LocalDateTime updatedAt;
 
 	public Long getId() {
 		return id;
@@ -117,7 +116,5 @@ public class Room {
 	public void setUpdatedAt(LocalDateTime updatedAt) {
 		this.updatedAt = updatedAt;
 	}
-    
-    
-    
+
 }

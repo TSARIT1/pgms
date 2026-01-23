@@ -18,11 +18,15 @@ import java.util.Arrays;
 public class RoomServiceImpl implements RoomService {
 
     private final DynamicRoomRepository dynamicRoomRepository;
+    private final com.pgm.pgm_Backend.repository.DynamicTenantRepository dynamicTenantRepository;
     private final AdminContextUtil adminContextUtil;
 
-    public RoomServiceImpl(DynamicRoomRepository dynamicRoomRepository, AdminContextUtil adminContextUtil) {
+    public RoomServiceImpl(DynamicRoomRepository dynamicRoomRepository,
+            com.pgm.pgm_Backend.repository.DynamicTenantRepository dynamicTenantRepository,
+            AdminContextUtil adminContextUtil) {
         super();
         this.dynamicRoomRepository = dynamicRoomRepository;
+        this.dynamicTenantRepository = dynamicTenantRepository;
         this.adminContextUtil = adminContextUtil;
     }
 
@@ -169,5 +173,77 @@ public class RoomServiceImpl implements RoomService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to update occupied beds", e);
         }
+    }
+
+    @Override
+    public void syncRoomOccupancy(String roomNumber) {
+        if (roomNumber == null || roomNumber.isEmpty())
+            return;
+
+        Long adminId = adminContextUtil.getCurrentAdminId();
+        Room room = getRoomByRoomNumber(roomNumber);
+
+        // Find all active tenants in this room
+        List<com.pgm.pgm_Backend.model.Tenant> tenants = dynamicTenantRepository.findByRoomNumber(adminId, roomNumber)
+                .stream()
+                .filter(t -> t.getIsDeleted() == null || !t.getIsDeleted())
+                .toList();
+
+        Set<Integer> occupiedSet = new HashSet<>();
+        for (com.pgm.pgm_Backend.model.Tenant t : tenants) {
+            if (t.getBedNumber() != null) {
+                occupiedSet.add(t.getBedNumber());
+            }
+        }
+
+        // Handle case where some tenants might not have a bedNumber yet (auto-assign if
+        // needed)
+        // For now, just count them as occupied if they're in the room but don't have a
+        // specific bed
+        int totalOccupied = tenants.size();
+
+        // If room is full based on student count, update status
+        if (room.getCapacity() != null && totalOccupied >= room.getCapacity()) {
+            room.setStatus("FULL");
+        } else {
+            room.setStatus("AVAILABLE");
+        }
+
+        room.setOccupiedBeds(totalOccupied);
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            room.setOccupiedBedNumbers(mapper.writeValueAsString(occupiedSet));
+            dynamicRoomRepository.save(adminId, room);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to sync room occupancy", e);
+        }
+    }
+
+    @Override
+    public Integer findFirstAvailableBed(String roomNumber) {
+        Room room = getRoomByRoomNumber(roomNumber);
+        if (room.getCapacity() == null || room.getCapacity() == 0)
+            return null;
+
+        String currentOccupied = room.getOccupiedBedNumbers();
+        Set<Integer> occupiedSet = new HashSet<>();
+
+        if (currentOccupied != null && !currentOccupied.isEmpty()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                Integer[] arr = mapper.readValue(currentOccupied, Integer[].class);
+                occupiedSet.addAll(Arrays.asList(arr));
+            } catch (Exception e) {
+                // Ignore parsing errors
+            }
+        }
+
+        for (int i = 1; i <= room.getCapacity(); i++) {
+            if (!occupiedSet.contains(i)) {
+                return i;
+            }
+        }
+        return null;
     }
 }

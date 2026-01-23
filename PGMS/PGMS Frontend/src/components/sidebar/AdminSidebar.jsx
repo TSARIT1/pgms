@@ -73,14 +73,15 @@ export default function AdminSidebar() {
           transition={{ duration: 0.5, delay: 0.1 }}
           style={{
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: '0.75rem',
-            padding: '1rem',
+            borderRadius: '1rem',
+            padding: '1.5rem',
             marginBottom: '2rem',
             textAlign: 'center',
-            fontSize: '1.5rem',
-            fontWeight: '700',
+            fontSize: '1.75rem',
+            fontWeight: '800',
             color: 'white',
-            boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
+            boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
+            letterSpacing: '0.05em',
           }}
         >
           PG/HMS
@@ -144,6 +145,7 @@ export default function AdminSidebar() {
                           bottom: 0,
                           width: '4px',
                           background: 'linear-gradient(180deg, #667eea 0%, #764ba2 100%)',
+                          boxShadow: '0 0 10px rgba(102, 126, 234, 0.6)',
                         }}
                         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                       />

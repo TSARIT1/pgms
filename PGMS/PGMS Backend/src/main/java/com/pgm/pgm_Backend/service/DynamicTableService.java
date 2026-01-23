@@ -27,6 +27,7 @@ public class DynamicTableService {
             // Run migrations
             migrateAddIsDeletedColumn(adminId);
             migrateAddPaymentColumns(adminId);
+            migrateAddPaymentIsDeletedColumn(adminId);
             migrateAddIdentityProofColumns(adminId);
 
             // Verify all tables were created successfully
@@ -140,7 +141,9 @@ public class DynamicTableService {
                 "transaction_id VARCHAR(255), " +
                 "transaction_details TEXT, " +
                 "gst_percentage DOUBLE DEFAULT 0.0, " +
+
                 "payment_type VARCHAR(50) DEFAULT 'RENT_PAYMENT', " +
+                "is_deleted BOOLEAN DEFAULT FALSE, " +
                 "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" +
                 ")";
@@ -168,6 +171,27 @@ public class DynamicTableService {
             }
         } catch (Exception e) {
             System.err.println("Warning: Could not add payment columns to " + tableName + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Migration: Add is_deleted column to existing payment tables
+     */
+    private void migrateAddPaymentIsDeletedColumn(Long adminId) {
+        String tableName = "admin_" + adminId + "_payments";
+        try {
+            // Check if is_deleted column exists
+            String checkSql = "SELECT COUNT(*) FROM information_schema.columns " +
+                    "WHERE table_schema = DATABASE() AND table_name = ? AND column_name = 'is_deleted'";
+            Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, tableName);
+
+            if (count == null || count == 0) {
+                String alterSql = "ALTER TABLE " + tableName + " ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE";
+                jdbcTemplate.execute(alterSql);
+                System.out.println("✓ Added is_deleted column to " + tableName);
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Could not add is_deleted column to " + tableName + ": " + e.getMessage());
         }
     }
 

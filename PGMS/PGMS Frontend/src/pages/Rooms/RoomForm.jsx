@@ -43,7 +43,11 @@ export default function RoomForm({ room, onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSubmit(formData)
+    const cleanedData = {
+      ...formData,
+      capacity: formData.capacity === '' ? null : formData.capacity
+    }
+    onSubmit(cleanedData)
   }
 
   const inputStyle = {
@@ -121,7 +125,7 @@ export default function RoomForm({ room, onSubmit }) {
           animate="visible"
         >
           <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#111827' }}>
-            Capacity
+            Capacity (Optional)
           </label>
           <motion.input
             type="number"

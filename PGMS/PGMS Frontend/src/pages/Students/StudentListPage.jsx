@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { FiSearch, FiRefreshCw, FiPlus, FiEdit2, FiTrash2, FiEye, FiUsers } from 'react-icons/fi'
 import DataTable from '../../components/common/DataTable'
 import StudentForm from './StudentForm'
-import { getAllStudents, createStudent, updateStudent, deleteStudent } from '../../services/studentService'
+import { getAllStudents, createStudent, updateStudent, deleteStudent, updateStudentStatus } from '../../services/studentService'
 import paymentService from '../../services/paymentService'
 import { getAllRooms } from '../../services/roomService'
 
@@ -64,6 +64,7 @@ export default function StudentListPage() {
           Email: t.email,
           Address: t.address,
           'Identity Proof': t.identityProofType || 'Not Specified',
+          Status: t.status || 'ACTIVE',
           IdentityProofType: t.identityProofType,
           __raw: t, // Contains all fields including identityProof and identityProofType
         }))
@@ -74,6 +75,20 @@ export default function StudentListPage() {
       setError(err.message || 'Failed to load students')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleStatusToggle = async (student) => {
+    try {
+      const newStatus = student.Status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
+      await updateStudentStatus(student.ID, newStatus)
+      // Optimistic update
+      setStudents(prev => prev.map(s => 
+        s.ID === student.ID ? { ...s, Status: newStatus } : s
+      ))
+    } catch (err) {
+      console.error('Error updating status:', err)
+      alert('Failed to update status')
     }
   }
 
@@ -151,8 +166,10 @@ export default function StudentListPage() {
     }
   }
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setSearchTerm('')
+    await loadStudents()
+    await loadRooms()
   }
 
   const handleEditSelected = () => {
@@ -192,7 +209,8 @@ export default function StudentListPage() {
     }
   }
 
-  const columns = ['ID', 'Name', 'Age', 'Gender', 'Room', 'Admission', 'Contact', 'Email', 'Identity Proof']
+  const columns = ['ID', 'Name', 'Age', 'Gender', 'Room', 'Admission', 'Contact', 'Email', 'Identity Proof', 'Status']
+
 
   return (
     <motion.div
@@ -319,7 +337,7 @@ export default function StudentListPage() {
               fontSize: '0.875rem',
             }}
           >
-            <FiRefreshCw /> {t('common.filter')}
+            <FiRefreshCw className={loading ? 'animate-spin' : ''} /> {t('common.refresh')}
           </motion.button>
 
         </div>
@@ -736,6 +754,34 @@ export default function StudentListPage() {
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          customRender={{
+              Status: (row) => (
+                  <button
+                      onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusToggle(row);
+                      }}
+                      style={{
+                          padding: '0.25rem 0.75rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.75rem',
+                          fontWeight: '600',
+                          border: 'none',
+                          cursor: 'pointer',
+                          backgroundColor: row.Status === 'ACTIVE' ? '#dcfce7' : '#fee2e2',
+                          color: row.Status === 'ACTIVE' ? '#166534' : '#991b1b',
+                          transition: 'all 0.2s',
+                          minWidth: '80px',
+                          textAlign: 'center'
+                      }}
+                  >
+                      {row.Status}
+                  </button>
+              ),
+              'Identity Proof': (row) => (
+                row.IdentityProofType || 'Not Specified'
+              )
+          }}
         />
       </motion.div>
 

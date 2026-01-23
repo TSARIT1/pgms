@@ -13,7 +13,7 @@ public class RoomRowMapper implements RowMapper<Room> {
         Room room = new Room();
         room.setId(rs.getLong("id"));
         room.setRoomNumber(rs.getString("room_number"));
-        room.setCapacity(rs.getInt("capacity"));
+        room.setCapacity(rs.getObject("capacity", Integer.class));
         room.setOccupiedBeds(rs.getInt("occupied_beds"));
         room.setOccupiedBedNumbers(rs.getString("occupied_bed_numbers"));
         room.setRent(rs.getDouble("rent"));

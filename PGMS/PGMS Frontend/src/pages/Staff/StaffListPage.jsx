@@ -136,24 +136,82 @@ export default function StaffListPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          padding: '2rem',
-          borderRadius: '1rem',
+          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+          padding: '2.5rem',
+          borderRadius: '1.5rem',
           color: 'white',
-          marginBottom: '2rem',
-          boxShadow: '0 10px 30px rgba(102, 126, 234, 0.2)',
+          marginBottom: '2.5rem',
+          boxShadow: '0 20px 40px -10px rgba(99, 102, 241, 0.4)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <div>
-          <h1 className="page-title" style={{ color: 'white' }}>{t('staff.title')}</h1>
-          <p className="page-subtitle" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{t('staff.title')}</p>
+        {/* Gradient Decoration Blob */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            top: '-50%',
+            right: '-20%',
+            width: '500px',
+            height: '500px',
+            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%)',
+            borderRadius: '50%',
+            filter: 'blur(40px)',
+          }}
+          animate={{
+            scale: [1, 1.1, 1],
+            rotate: [0, 90, 0],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <motion.h1 
+            className="page-title" 
+            style={{ 
+              color: 'white',
+              fontSize: '2.5rem',
+              fontWeight: '800',
+              marginBottom: '0.75rem',
+              letterSpacing: '-0.02em',
+              textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            {t('staff.title')}
+          </motion.h1>
+          <p className="page-subtitle" style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '1.1rem', maxWidth: '600px', lineHeight: '1.6' }}>
+            Manage your team members and oversee staff operations efficiently.
+          </p>
         </div>
-        <div style={{ fontSize: '2.5rem', opacity: 0.3 }}>
+        <motion.div 
+          style={{ 
+            fontSize: '5rem', 
+            opacity: 0.15,
+            position: 'relative',
+            zIndex: 1,
+            marginRight: '1rem',
+          }}
+          animate={{ 
+            y: [0, -10, 0],
+          }}
+          transition={{
+            duration: 5,
+            repeat: Infinity,
+            ease: 'easeInOut'
+          }}
+        >
           <FiUsers />
-        </div>
+        </motion.div>
       </motion.div>
 
       {/* Form Modal */}
@@ -175,33 +233,42 @@ export default function StaffListPage() {
             <motion.div
               className="modal-header"
               style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                 borderRadius: '1rem 1rem 0 0',
+                padding: '1.5rem',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}
             >
-              <h2 className="modal-title" style={{ color: 'white' }}>
+              <h2 className="modal-title" style={{ color: 'white', fontSize: '1.25rem', fontWeight: '700', margin: 0 }}>
                 {editingStaff ? `✏️ ${t('staff.editStaff')}` : `➕ ${t('staff.addStaff')}`}
               </h2>
               <motion.button 
                 className="modal-close-btn" 
                 onClick={() => setShowForm(false)}
-                whileHover={{ scale: 1.2, rotate: 90 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.95 }}
                 style={{
                   background: 'rgba(255, 255, 255, 0.2)',
                   border: 'none',
                   color: 'white',
-                  fontSize: '1.5rem',
+                  fontSize: '1.25rem',
                   cursor: 'pointer',
                   borderRadius: '0.5rem',
-                  width: '2rem',
-                  height: '2rem',
+                  width: '2.5rem',
+                  height: '2.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background 0.2s',
                 }}
               >
                 ✕
               </motion.button>
             </motion.div>
-            <div className="modal-body">
+            <div className="modal-body" style={{ padding: '2rem' }}>
               <StaffForm
                 staff={editingStaff}
                 onSubmit={async (data) => {
@@ -227,27 +294,32 @@ export default function StaffListPage() {
           marginBottom: '2rem',
           flexWrap: 'wrap',
           gap: '1rem',
+          background: 'white',
+          padding: '1rem',
+          borderRadius: '1rem',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+          border: '1px solid #f1f5f9',
         }}
       >
         <div style={{ display: 'flex', gap: '1rem' }}>
           <motion.button
             onClick={loadStaff}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02, backgroundColor: '#f8fafc' }}
+            whileTap={{ scale: 0.98 }}
             disabled={loading}
             style={{
-              padding: '0.75rem 1.5rem',
-              background: loading ? '#d1d5db' : 'white',
-              color: loading ? 'white' : '#4b5563',
-              border: '1px solid #e5e7eb',
-              borderRadius: '0.5rem',
+              padding: '0.75rem 1.25rem',
+              background: 'white',
+              color: '#64748b',
+              border: '1px solid #e2e8f0',
+              borderRadius: '0.75rem',
               fontSize: '0.95rem',
               fontWeight: '600',
               cursor: loading ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+              transition: 'all 0.2s ease',
             }}
           >
             <motion.div
@@ -266,20 +338,21 @@ export default function StaffListPage() {
             setEditingStaff(null)
             setShowForm(true)
           }}
-          whileHover={{ scale: 1.05, boxShadow: '0 8px 20px rgba(59, 130, 246, 0.4)' }}
+          whileHover={{ scale: 1.05, boxShadow: '0 10px 20px -10px rgba(99, 102, 241, 0.4)' }}
           whileTap={{ scale: 0.95 }}
           style={{
-            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
             padding: '0.75rem 1.5rem',
             color: 'white',
             border: 'none',
-            borderRadius: '0.5rem',
+            borderRadius: '0.75rem',
             fontWeight: '600',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
             fontSize: '0.95rem',
+            boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.2)',
           }}
         >
           <FiPlus /> {t('staff.addStaff')}

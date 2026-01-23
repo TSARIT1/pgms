@@ -234,4 +234,21 @@ public class TenantController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<?> updateTenantStatus(@PathVariable Long id, @RequestParam String status) {
+        try {
+            Tenant updatedTenant = tenantService.updateTenantStatus(id, status);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Tenant status updated successfully");
+            response.put("data", updatedTenant);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 }

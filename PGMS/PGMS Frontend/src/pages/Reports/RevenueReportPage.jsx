@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { FiDollarSign, FiCalendar, FiTrendingUp, FiDownload } from 'react-icons/fi'
+import { FiDollarSign, FiCalendar, FiTrendingUp, FiDownload, FiArrowLeft } from 'react-icons/fi'
 import paymentService from '../../services/paymentService'
 import { jsPDF } from 'jspdf'
 
 export default function RevenueReportPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [payments, setPayments] = useState([])
   const [loading, setLoading] = useState(true)
   
@@ -205,11 +207,32 @@ export default function RevenueReportPage() {
           alignItems: 'center',
         }}
       >
-        <div>
-          <h1 className="page-title" style={{ color: 'white' }}>Revenue Report</h1>
-          <p className="page-subtitle" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-            View monthly and yearly revenue analytics
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate('/reports')}
+            style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              cursor: 'pointer',
+            }}
+          >
+            <FiArrowLeft size={24} />
+          </motion.button>
+          <div>
+            <h1 className="page-title" style={{ color: 'white', marginBottom: '0.25rem' }}>Revenue Report</h1>
+            <p className="page-subtitle" style={{ color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+              View monthly and yearly revenue analytics
+            </p>
+          </div>
         </div>
         <div style={{ fontSize: '2.5rem', opacity: 0.3 }}>
           <FiDollarSign />

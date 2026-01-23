@@ -26,7 +26,15 @@ public class DynamicPaymentRepository {
     }
 
     public List<Payment> findAll(Long adminId) {
+        String sql = "SELECT * FROM " + getTableName(adminId) + " WHERE is_deleted = false";
+        return jdbcTemplate.query(sql, new PaymentRowMapper());
+    }
+
+    public List<Payment> findAll(Long adminId, boolean includeDeleted) {
         String sql = "SELECT * FROM " + getTableName(adminId);
+        if (!includeDeleted) {
+            sql += " WHERE is_deleted = false";
+        }
         return jdbcTemplate.query(sql, new PaymentRowMapper());
     }
 
@@ -47,8 +55,9 @@ public class DynamicPaymentRepository {
     private Payment insert(Long adminId, Payment payment) {
         String sql = "INSERT INTO " + getTableName(adminId) +
                 " (tenant_id, student, amount, payment_date, method, status, notes, " +
-                "transaction_id, transaction_details, gst_percentage, payment_type, created_at, updated_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "transaction_id, transaction_details, gst_percentage, payment_type, is_deleted, created_at, updated_at) "
+                +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -90,8 +99,9 @@ public class DynamicPaymentRepository {
             ps.setString(9, finalTransactionDetails);
             ps.setDouble(10, payment.getGstPercentage() != null ? payment.getGstPercentage() : 0.0);
             ps.setString(11, payment.getPaymentType() != null ? payment.getPaymentType() : "RENT_PAYMENT");
-            ps.setObject(12, now);
+            ps.setBoolean(12, payment.getIsDeleted() != null ? payment.getIsDeleted() : false);
             ps.setObject(13, now);
+            ps.setObject(14, now);
             return ps;
         }, keyHolder);
 
@@ -108,7 +118,7 @@ public class DynamicPaymentRepository {
         String sql = "UPDATE " + getTableName(adminId) +
                 " SET tenant_id = ?, student = ?, amount = ?, payment_date = ?, method = ?, " +
                 "status = ?, notes = ?, transaction_id = ?, transaction_details = ?, " +
-                "gst_percentage = ?, payment_type = ?, updated_at = ? WHERE id = ?";
+                "gst_percentage = ?, payment_type = ?, is_deleted = ?, updated_at = ? WHERE id = ?";
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -124,6 +134,7 @@ public class DynamicPaymentRepository {
                 payment.getTransactionDetails(),
                 payment.getGstPercentage() != null ? payment.getGstPercentage() : 0.0,
                 payment.getPaymentType() != null ? payment.getPaymentType() : "RENT_PAYMENT",
+                payment.getIsDeleted() != null ? payment.getIsDeleted() : false,
                 now,
                 payment.getId());
 
@@ -132,7 +143,7 @@ public class DynamicPaymentRepository {
     }
 
     public void deleteById(Long adminId, Long id) {
-        String sql = "DELETE FROM " + getTableName(adminId) + " WHERE id = ?";
+        String sql = "UPDATE " + getTableName(adminId) + " SET is_deleted = true WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
 

@@ -15,79 +15,86 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Admin {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @NotBlank(message = "Name cannot be blank")
-    @Column(nullable = false)
-    private String name;
+	@NotBlank(message = "Name cannot be blank")
+	@Column(nullable = false)
+	private String name;
 
-    @Email(message = "Email should be valid")
-    @NotBlank(message = "Email cannot be blank")
-    @Column(nullable = false, unique = true)
-    private String email;
+	@Email(message = "Email should be valid")
+	@NotBlank(message = "Email cannot be blank")
+	@Column(nullable = false, unique = true)
+	private String email;
 
-    @NotBlank(message = "Phone cannot be blank")
-    @Pattern(regexp = "^[0-9]{10}$", message = "Phone must be 10 digits")
-    @Column(nullable = false, unique = true)
-    private String phone;
+	@NotBlank(message = "Phone cannot be blank")
+	@Pattern(regexp = "^[0-9]{10}$", message = "Phone must be 10 digits")
+	@Column(nullable = false, unique = true)
+	private String phone;
 
-    @NotBlank(message = "Password cannot be blank")
-    @Column(nullable = false)
-    private String password;
+	@NotBlank(message = "Password cannot be blank")
+	@Column(nullable = false)
+	private String password;
 
-    @Column(nullable = false, length = 50)
-    private String type; // e.g., "Admin", "Manager"
+	@Column(nullable = false, length = 50)
+	private String type; // e.g., "Admin", "Manager"
 
-    @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'ADMIN'")
-    private String role = "ADMIN"; // ADMIN or SUPER_ADMIN
+	@Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'ADMIN'")
+	private String role = "ADMIN"; // ADMIN or SUPER_ADMIN
 
-    @Column(name = "photo_url")
-    private String photoUrl;
+	@Column(name = "photo_url")
+	private String photoUrl;
 
-    @Column(name = "hostel_address")
-    private String hostelAddress;
+	@Column(name = "hostel_address")
+	private String hostelAddress;
 
-    @Column(name = "hostel_name")
-    private String hostelName;
+	@Column(name = "hostel_name")
+	private String hostelName;
 
-    @Column(name = "location_link", length = 500)
-    private String locationLink;
+	@Column(name = "location_link", length = 500)
+	private String locationLink;
 
-    @Column(name = "hostel_photos", length = 2000)
-    private String hostelPhotos; // JSON array of photo URLs
+	@Column(name = "hostel_photos", length = 2000)
+	private String hostelPhotos; // JSON array of photo URLs
 
-    @Column(name = "hostel_type", length = 50)
-    private String hostelType; // Normal, Co-living, Boys, Girls, Others
+	@Column(name = "hostel_type", length = 50)
+	private String hostelType; // Normal, Co-living, Boys, Girls, Others
 
-    @Column(name = "subscription_plan", length = 50)
-    private String subscriptionPlan; // BASIC, PREMIUM, ENTERPRISE
+	@Column(name = "subscription_plan", length = 50)
+	private String subscriptionPlan; // BASIC, PREMIUM, ENTERPRISE
 
-    @Column(name = "subscription_start_date")
-    private java.time.LocalDateTime subscriptionStartDate;
+	@Column(name = "subscription_start_date")
+	private java.time.LocalDateTime subscriptionStartDate;
 
-    @Column(name = "subscription_end_date")
-    private java.time.LocalDateTime subscriptionEndDate;
+	@Column(name = "subscription_end_date")
+	private java.time.LocalDateTime subscriptionEndDate;
 
-    @Column(name = "is_frozen", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private Boolean isFrozen = false;
+	@Column(name = "is_frozen", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+	private Boolean isFrozen = false;
 
-    @Column(name = "referred_by")
-    private String referredBy; // Optional field to track who referred this admin
+	@Column(name = "referred_by")
+	private String referredBy; // Optional field to track who referred this admin
 
-    @jakarta.persistence.Transient
-    private Long planId; // Temporary field to receive plan ID from frontend (not stored in DB)
+	@jakarta.persistence.Transient
+	private Long planId; // Temporary field to receive plan ID from frontend (not stored in DB)
 
-    @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private java.time.LocalDateTime createdAt;
+	@jakarta.persistence.Transient
+	private String razorpayPaymentId;
 
-    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-    private java.time.LocalDateTime updatedAt;
+	@jakarta.persistence.Transient
+	private String razorpayOrderId;
 
-    
-    
-    public Long getId() {
+	@jakarta.persistence.Transient
+	private String razorpaySignature;
+
+	@Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+	private java.time.LocalDateTime createdAt;
+
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+	private java.time.LocalDateTime updatedAt;
+
+	public Long getId() {
 		return id;
 	}
 
@@ -239,6 +246,30 @@ public class Admin {
 		this.planId = planId;
 	}
 
+	public String getRazorpayPaymentId() {
+		return razorpayPaymentId;
+	}
+
+	public void setRazorpayPaymentId(String razorpayPaymentId) {
+		this.razorpayPaymentId = razorpayPaymentId;
+	}
+
+	public String getRazorpayOrderId() {
+		return razorpayOrderId;
+	}
+
+	public void setRazorpayOrderId(String razorpayOrderId) {
+		this.razorpayOrderId = razorpayOrderId;
+	}
+
+	public String getRazorpaySignature() {
+		return razorpaySignature;
+	}
+
+	public void setRazorpaySignature(String razorpaySignature) {
+		this.razorpaySignature = razorpaySignature;
+	}
+
 	public java.time.LocalDateTime getCreatedAt() {
 		return createdAt;
 	}
@@ -256,22 +287,22 @@ public class Admin {
 	}
 
 	@PrePersist
-    protected void onCreate() {
-        createdAt = java.time.LocalDateTime.now();
-        updatedAt = java.time.LocalDateTime.now();
-        if (isFrozen == null) {
-            isFrozen = false;
-        }
-        if (role == null || role.isEmpty()) {
-            role = "ADMIN";
-        }
-        if (type == null || type.isEmpty()) {
-            type = "PG/Hostel Owner";
-        }
-    }
+	protected void onCreate() {
+		createdAt = java.time.LocalDateTime.now();
+		updatedAt = java.time.LocalDateTime.now();
+		if (isFrozen == null) {
+			isFrozen = false;
+		}
+		if (role == null || role.isEmpty()) {
+			role = "ADMIN";
+		}
+		if (type == null || type.isEmpty()) {
+			type = "PG/Hostel Owner";
+		}
+	}
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = java.time.LocalDateTime.now();
-    }
+	@PreUpdate
+	protected void onUpdate() {
+		updatedAt = java.time.LocalDateTime.now();
+	}
 }

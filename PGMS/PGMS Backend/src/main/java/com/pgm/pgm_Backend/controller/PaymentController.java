@@ -134,18 +134,6 @@
  * ResponseEntity.badRequest().body(response); } } }
  */
 
-
-
-
-
-
-
-
-
-
-
-
-
 package com.pgm.pgm_Backend.controller;
 
 import com.pgm.pgm_Backend.model.Payment;
@@ -184,9 +172,10 @@ public class PaymentController {
 
     // 🔹 Get all payments
     @GetMapping
-    public ResponseEntity<?> getAllPayments() {
+    public ResponseEntity<?> getAllPayments(
+            @RequestParam(required = false, defaultValue = "false") boolean includeDeleted) {
         try {
-            List<Payment> payments = paymentService.getAllPayments();
+            List<Payment> payments = paymentService.getAllPayments(includeDeleted);
 
             Map<String, Object> response = new HashMap<>();
             response.put("status", "success");
@@ -236,8 +225,7 @@ public class PaymentController {
                             createdPayment.getAmount(),
                             createdPayment.getMethod(),
                             createdPayment.getPaymentDate().toString(),
-                            admin.getHostelName()
-                    );
+                            admin.getHostelName());
                     log.info("Payment success email sent to {}", admin.getEmail());
                 }
             } catch (Exception ex) {

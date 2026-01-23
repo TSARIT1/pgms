@@ -22,4 +22,8 @@ public interface RoomService {
     void addOccupiedBed(String roomNumber, Integer bedNumber);
 
     void removeOccupiedBed(String roomNumber, Integer bedNumber);
+
+    void syncRoomOccupancy(String roomNumber);
+
+    Integer findFirstAvailableBed(String roomNumber);
 }

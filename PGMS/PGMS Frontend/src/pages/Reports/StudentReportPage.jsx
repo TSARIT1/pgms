@@ -19,6 +19,7 @@ export default function StudentReportPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterRoom, setFilterRoom] = useState('All')
+  const [filterStatus, setFilterStatus] = useState('All')
   const [selectedStudent, setSelectedStudent] = useState(null)
 
   useEffect(() => {
@@ -68,30 +69,28 @@ export default function StudentReportPage() {
     // Get payment summary
     const studentPayments = payments.filter(p => p.student === student.name || p.studentName === student.name)
     const totalPaid = studentPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0)
+    
+    // Calculate total advance payment
+    const totalAdvance = studentPayments
+      .filter(p => p.paymentType === 'ADVANCE_PAYMENT')
+      .reduce((sum, p) => sum + Number(p.amount || 0), 0)
+
     const totalDue = rent - totalPaid
     const lastPayment = studentPayments.length > 0 
       ? studentPayments.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))[0]
       : null
 
-    // Get attendance summary
-    const studentAttendance = attendance.filter(a => a.studentName === student.name)
-    const presentDays = studentAttendance.filter(a => a.status?.toUpperCase() === 'PRESENT').length
-    const absentDays = studentAttendance.filter(a => a.status?.toUpperCase() === 'ABSENT').length
-    const totalDays = studentAttendance.length
-    const attendancePercentage = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(1) : 0
+
 
     return {
       ...student,
       roomNumber: student.roomNumber || 'Not Assigned',
       rent,
       totalPaid,
+      totalAdvance,
       totalDue: totalDue > 0 ? totalDue : 0,
       lastPaymentDate: lastPayment ? lastPayment.paymentDate : 'N/A',
       lastPaymentAmount: lastPayment ? lastPayment.amount : 0,
-      presentDays,
-      absentDays,
-      totalDays,
-      attendancePercentage,
       recentPayments: studentPayments.slice(0, 5)
     }
   }
@@ -103,7 +102,8 @@ export default function StudentReportPage() {
         student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.phone?.includes(searchTerm)
       const matchesRoom = filterRoom === 'All' || student.roomNumber === filterRoom
-      return matchesSearch && matchesRoom
+      const matchesStatus = filterStatus === 'All' || (student.status || 'ACTIVE') === filterStatus
+      return matchesSearch && matchesRoom && matchesStatus
     })
     .map(getStudentReport)
 
@@ -146,16 +146,17 @@ export default function StudentReportPage() {
       doc.text(`Total Collected: Rs.${filteredStudents.reduce((sum, s) => sum + s.totalPaid, 0).toLocaleString()}`, 14, 54)
       doc.text(`Total Due: Rs.${filteredStudents.reduce((sum, s) => sum + s.totalDue, 0).toLocaleString()}`, 14, 60)
       
-      // Add table header (without Attendance column)
+      // Add table header (with Timestamp column)
       doc.setFontSize(9)
       doc.setFillColor(102, 126, 234)
       doc.rect(14, 70, 182, 8, 'F')
       doc.setTextColor(255, 255, 255)
       doc.text('Name', 16, 76)
-      doc.text('Room', 70, 76)
-      doc.text('Rent', 105, 76)
-      doc.text('Paid', 135, 76)
-      doc.text('Due', 165, 76)
+      doc.text('Room', 60, 76)
+      doc.text('Rent', 85, 76)
+      doc.text('Paid', 110, 76)
+      doc.text('Due', 135, 76)
+      doc.text('Timestamp', 160, 76)
       
       // Add table rows
       let yPos = 84
@@ -168,12 +169,13 @@ export default function StudentReportPage() {
           doc.rect(14, yPos - 6, 182, 8, 'F')
         }
         
-        // Add student data (without attendance)
-        doc.text(student.name.substring(0, 25), 16, yPos)
-        doc.text(student.roomNumber, 70, yPos)
-        doc.text(`Rs.${student.rent.toLocaleString()}`, 105, yPos)
-        doc.text(`Rs.${student.totalPaid.toLocaleString()}`, 135, yPos)
-        doc.text(`Rs.${student.totalDue.toLocaleString()}`, 165, yPos)
+        // Add student data (with timestamp)
+        doc.text(student.name.substring(0, 20), 16, yPos)
+        doc.text(student.roomNumber, 60, yPos)
+        doc.text(`Rs.${student.rent.toLocaleString()}`, 85, yPos)
+        doc.text(`Rs.${student.totalPaid.toLocaleString()}`, 110, yPos)
+        doc.text(`Rs.${student.totalDue.toLocaleString()}`, 135, yPos)
+        doc.text(new Date(student.createdAt).toLocaleDateString(), 160, yPos)
         
         yPos += 8
         
@@ -302,6 +304,26 @@ export default function StudentReportPage() {
           {[...new Set(students.map(s => s.roomNumber))].filter(Boolean).map(room => (
             <option key={room} value={room}>{room}</option>
           ))}
+        </select>
+
+        {/* Status Filter */}
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          style={{
+            padding: '0.75rem 1rem',
+            border: '2px solid #e5e7eb',
+            borderRadius: '0.5rem',
+            background: 'white',
+            fontSize: '0.95rem',
+            minWidth: '150px',
+            outline: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          <option value="All">All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
         </select>
 
         <motion.button
@@ -436,6 +458,9 @@ export default function StudentReportPage() {
                   <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>{t('studentReport.rent')}</th>
                   <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>{t('studentReport.paid')}</th>
                   <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>{t('studentReport.due')}</th>
+
+                  <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Status</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Timestamp</th>
                   <th style={{ padding: '1rem', textAlign: 'center', fontWeight: '600', color: '#374151' }}>{t('studentReport.action')}</th>
                 </tr>
               </thead>
@@ -458,6 +483,21 @@ export default function StudentReportPage() {
                     <td style={{ padding: '1rem', color: '#10b981', fontWeight: '600' }}>₹{student.totalPaid.toLocaleString()}</td>
                     <td style={{ padding: '1rem', color: student.totalDue > 0 ? '#ef4444' : '#10b981', fontWeight: '600' }}>
                       ₹{student.totalDue.toLocaleString()}
+                    </td>
+                    <td style={{ padding: '1rem' }}>
+                      <span style={{
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        backgroundColor: (student.status || 'ACTIVE') === 'ACTIVE' ? '#dcfce7' : '#fee2e2',
+                        color: (student.status || 'ACTIVE') === 'ACTIVE' ? '#166534' : '#991b1b',
+                      }}>
+                        {student.status || 'ACTIVE'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '1rem', color: '#6b7280' }}>
+                      {new Date(student.createdAt).toLocaleString()}
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
                       <motion.button
@@ -560,6 +600,19 @@ export default function StudentReportPage() {
                     <div style={{ fontWeight: '600', color: '#111827' }}>{selectedStudent.name}</div>
                   </div>
                   <div>
+                    <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>Status</div>
+                    <span style={{
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      backgroundColor: (selectedStudent.status || 'ACTIVE') === 'ACTIVE' ? '#dcfce7' : '#fee2e2',
+                      color: (selectedStudent.status || 'ACTIVE') === 'ACTIVE' ? '#166534' : '#991b1b',
+                    }}>
+                      {selectedStudent.status || 'ACTIVE'}
+                    </span>
+                  </div>
+                  <div>
                     <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>{t('studentReport.email')}</div>
                     <div style={{ fontWeight: '600', color: '#111827' }}>{selectedStudent.email}</div>
                   </div>
@@ -590,23 +643,14 @@ export default function StudentReportPage() {
                     <div style={{ fontSize: '0.875rem', color: '#dc2626', marginBottom: '0.25rem' }}>{t('studentReport.totalDue')}</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#991b1b' }}>₹{selectedStudent.totalDue.toLocaleString()}</div>
                   </div>
+                  <div style={{ padding: '1rem', background: '#f5f3ff', borderRadius: '0.5rem' }}>
+                    <div style={{ fontSize: '0.875rem', color: '#7c3aed', marginBottom: '0.25rem' }}>Advance Payment</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#5b21b6' }}>₹{selectedStudent.totalAdvance.toLocaleString()}</div>
+                  </div>
                 </div>
               </div>
 
-              {/* Attendance Summary */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <h3 style={{ marginBottom: '1rem', color: '#111827' }}>{t('studentReport.attendanceSummary')}</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem' }}>
-                  <div style={{ textAlign: 'center', padding: '1rem', background: '#f9fafb', borderRadius: '0.5rem' }}>
-                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#3b82f6' }}>{selectedStudent.totalDays}</div>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{t('studentReport.totalDays')}</div>
-                  </div>
-                  <div style={{ textAlign: 'center', padding: '1rem', background: '#f0f9ff', borderRadius: '0.5rem' }}>
-                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#3b82f6' }}>{selectedStudent.attendancePercentage}%</div>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{t('studentReport.percentage')}</div>
-                  </div>
-                </div>
-              </div>
+
 
               {/* Recent Payments */}
               {selectedStudent.recentPayments && selectedStudent.recentPayments.length > 0 && (
@@ -618,14 +662,31 @@ export default function StudentReportPage() {
                         <tr>
                           <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>{t('studentReport.date')}</th>
                           <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>{t('studentReport.amount')}</th>
+                          <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>Type</th>
+                          <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>GST %</th>
+                          <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>GST Amt</th>
                           <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>{t('studentReport.method')}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {selectedStudent.recentPayments.map((payment, index) => (
                           <tr key={index} style={{ borderTop: '1px solid #e5e7eb' }}>
-                            <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#374151' }}>{payment.paymentDate}</td>
+                            <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#374151' }}>{new Date(payment.paymentDate).toLocaleDateString()}</td>
                             <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#10b981', fontWeight: '600' }}>₹{Number(payment.amount).toLocaleString()}</td>
+                            <td style={{ padding: '0.75rem', fontSize: '0.75rem', color: '#374151', textTransform: 'uppercase', fontWeight: '600' }}>
+                              {(payment.paymentType || 'RENT_PAYMENT').replace('_', ' ')}
+                            </td>
+                            <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#374151' }}>
+                              {payment.gstPercentage ? `${payment.gstPercentage}%` : '0%'}
+                            </td>
+                            <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#374151' }}>
+                              ₹{(() => {
+                                const total = Number(payment.amount)
+                                const gst = payment.gstPercentage || 0
+                                const base = total / (1 + (gst / 100))
+                                return (total - base).toFixed(2)
+                              })()}
+                            </td>
                             <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#374151' }}>{payment.method || 'N/A'}</td>
                           </tr>
                         ))}

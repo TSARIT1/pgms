@@ -36,6 +36,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers("/api/admin/login", "/api/admin/register", "/api/admin/send-otp",
                                 "/api/admin/verify-otp", "/api/admin/reset-password", "/api/admin/all",
                                 "/api/admin/send-login-otp", "/api/admin/verify-login-otp")
@@ -45,7 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/subscription-plans/**")
                         .permitAll() // Public GET access to view plans
                         .requestMatchers("/api/subscription-plans/**").authenticated() // Require auth for
-                                                                                       // POST/PUT/DELETE
+                        // POST/PUT/DELETE
                         .requestMatchers("/uploads/**", "/api/locations/**", "/api/appointments/**")
                         .permitAll()
                         .anyRequest().authenticated())
@@ -76,15 +78,24 @@ public class SecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174",
-                "http://localhost:5175", "http://localhost:3000", "https://pgms.tsaritservices.com")); // Frontend URLs
+
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://103.189.89.190:*",         // ✅ your IP frontend
+                "http://pgms.tsaritservices.com",  // ✅ if frontend uses http
+                "https://pgms.tsaritservices.com",
+                "https://www.pgms.tsaritservices.com"
+        ));
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
 }

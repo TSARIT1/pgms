@@ -272,40 +272,68 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          padding: '2rem',
-          borderRadius: '1rem',
+          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+          padding: '2.5rem',
+          borderRadius: '1.5rem',
           color: 'white',
-          marginBottom: '2rem',
-          boxShadow: '0 10px 30px rgba(102, 126, 234, 0.2)',
+          marginBottom: '2.5rem',
+          boxShadow: '0 20px 40px -10px rgba(99, 102, 241, 0.4)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <div>
-          <h1 className="page-title" style={{ color: 'white' }}>{t('dashboard.title')}</h1>
-          <p className="page-subtitle" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{t('dashboard.welcomeMessage')}</p>
+        {/* Decorative elements */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            top: '-50%',
+            left: '-10%',
+            width: '400px',
+            height: '400px',
+            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 70%)',
+            borderRadius: '50%',
+            filter: 'blur(40px)',
+          }}
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 45, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <h1 className="page-title" style={{ color: 'white', fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>{t('dashboard.title')}</h1>
+          <p className="page-subtitle" style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '1.1rem' }}>{t('dashboard.welcomeMessage')}</p>
         </div>
         
         <motion.button
           onClick={loadDashboardData}
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, backgroundColor: 'rgba(255, 255, 255, 0.25)' }}
           whileTap={{ scale: 0.95 }}
           disabled={loading}
           style={{
-            padding: '0.75rem 1.5rem',
-            background: 'rgba(255, 255, 255, 0.2)',
+            padding: '0.75rem 1.25rem',
+            background: 'rgba(255, 255, 255, 0.15)',
             color: 'white',
             border: '1px solid rgba(255, 255, 255, 0.3)',
-            borderRadius: '0.5rem',
+            borderRadius: '0.75rem',
             fontSize: '0.95rem',
             fontWeight: '600',
             cursor: loading ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
-            backdropFilter: 'blur(5px)',
+            backdropFilter: 'blur(10px)',
+            position: 'relative',
+            zIndex: 1,
+            transition: 'background 0.2s',
           }}
         >
           <motion.div
@@ -325,15 +353,25 @@ export default function DashboardPage() {
         transition={{ duration: 0.5, delay: 0.2 }}
         style={{
           background: 'white',
-          border: '2px solid #e5e7eb',
-          borderRadius: '0.75rem',
-          padding: '1rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.05)',
+          borderRadius: '1.5rem',
+          padding: '0.5rem',
+          marginBottom: '3rem',
+          boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.05)',
+          border: '1px solid #f1f5f9',
+          maxWidth: '800px',
+          margin: '0 auto 3rem',
         }}
       >
-        <div style={{ position: 'relative' }}>
-          <FiSearch style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: '1.25rem' }} />
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <div style={{ 
+            padding: '0 1.5rem',
+            color: '#6366f1',
+            fontSize: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+          }}>
+            <FiSearch />
+          </div>
           <input
             type="text"
             placeholder={t('dashboard.searchPlaceholder')}
@@ -341,25 +379,48 @@ export default function DashboardPage() {
             onChange={(e) => handleSearch(e.target.value)}
             style={{
               width: '100%',
-              padding: '0.75rem 1rem 0.75rem 3rem',
+              padding: '1.25rem 1rem 1.25rem 0',
               border: 'none',
-              borderRadius: '0.5rem',
-              fontSize: '1rem',
+              fontSize: '1.1rem',
               outline: 'none',
+              background: 'transparent',
+              color: '#1e293b',
             }}
           />
+          {searchQuery && (
+            <motion.button
+              onClick={() => {
+                setSearchQuery('')
+                setShowSearchResults(false)
+              }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              style={{
+                marginRight: '1rem',
+                padding: '0.5rem',
+                border: 'none',
+                background: '#f1f5f9',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                color: '#64748b',
+                display: 'flex',
+              }}
+            >
+              <span style={{ fontSize: '0.8rem' }}>✕</span>
+            </motion.button>
+          )}
         </div>
 
-        {/* Search Results - Inline Display */}
+        {/* Search Results */}
         {showSearchResults && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
             style={{
-              marginTop: '1.5rem',
-              paddingTop: '1.5rem',
-              borderTop: '2px solid #e5e7eb',
+              borderTop: '1px solid #f1f5f9',
+              marginTop: '0.5rem',
+              padding: '1.5rem',
             }}
           >
             <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

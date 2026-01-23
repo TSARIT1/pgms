@@ -13,17 +13,17 @@ public class DataInitializer {
         CommandLineRunner initDatabase(SuperAdminRepository superAdminRepository) {
                 return args -> {
                         // Always delete and recreate SuperAdmin
-                        superAdminRepository.findByEmail("dighesaurabhh31@gmail.com")
+                        superAdminRepository.findByEmail("tsaritservices@gmail.com")
                                         .ifPresent(superAdminRepository::delete);
 
                         // Create SuperAdmin with email only (OTP-based authentication)
                         SuperAdmin superAdmin = new SuperAdmin();
-                        superAdmin.setEmail("dighesaurabhh31@gmail.com");
+                        superAdmin.setEmail("tsaritservices@gmail.com");
 
                         superAdminRepository.save(superAdmin);
 
                         System.out.println("Super Admin created successfully!");
-                        System.out.println("dighesaurabhh31@gmail.com");
+                        System.out.println("tsaritservices@gmail.com");
                         System.out.println("Authentication: OTP-based (Email verification only)");
 
                 };

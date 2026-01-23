@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FiSearch, FiArrowLeft, FiCalendar } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
-import { getAllStudents } from '../../services/studentService'
+import { getAllStudentsIncludingDeleted } from '../../services/studentService'
 import attendanceService from '../../services/attendanceService'
 import { useTranslation } from 'react-i18next'
 
@@ -23,7 +23,7 @@ export default function AttendanceReportPage() {
     try {
       setLoading(true)
       const [studentsResp, attendanceResp] = await Promise.all([
-        getAllStudents(),
+        getAllStudentsIncludingDeleted(),
         attendanceService.getAllAttendance()
       ])
 

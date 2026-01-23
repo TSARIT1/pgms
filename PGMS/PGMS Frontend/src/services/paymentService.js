@@ -2,8 +2,8 @@ import { API_ENDPOINTS } from './apiConfig'
 import { apiGet, apiPost, apiPut, apiDelete, replacePathParams } from './apiHelper'
 
 const paymentService = {
-  getAllPayments: async () => {
-    const resp = await apiGet(API_ENDPOINTS.PAYMENTS_GET_ALL)
+  getAllPayments: async (includeDeleted = false) => {
+    const resp = await apiGet(API_ENDPOINTS.PAYMENTS_GET_ALL, { includeDeleted })
     return resp.data || []
   },
 

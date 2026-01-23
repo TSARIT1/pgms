@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { FiCalendar, FiUser, FiPhone, FiMail, FiMapPin, FiClock, FiCheck, FiX, FiMessageSquare } from 'react-icons/fi'
+import { FiCalendar, FiUser, FiPhone, FiMail, FiMapPin, FiClock, FiCheck, FiX, FiMessageSquare, FiRefreshCw } from 'react-icons/fi'
 import { getAllAppointments, updateAppointmentStatus } from '../../services/appointmentService'
 
 export default function AppointmentsPage() {
@@ -88,13 +88,36 @@ export default function AppointmentsPage() {
           alignItems: 'center',
         }}
       >
-        <div>
-          <h1 style={{ color: 'white', margin: 0, fontSize: '2rem', fontWeight: '700' }}>
-            {t('appointments.title')}
-          </h1>
-          <p style={{ color: 'rgba(255, 255, 255, 0.9)', margin: '0.5rem 0 0 0' }}>
-            {t('appointments.title')}
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <div>
+            <h1 style={{ color: 'white', margin: 0, fontSize: '2rem', fontWeight: '700' }}>
+              {t('appointments.title')}
+            </h1>
+            <p style={{ color: 'rgba(255, 255, 255, 0.9)', margin: '0.5rem 0 0 0' }}>
+              {t('appointments.title')}
+            </p>
+          </div>
+          <motion.button
+            onClick={fetchAppointments}
+            whileHover={{ scale: 1.1, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+            whileTap={{ scale: 0.9 }}
+            style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              borderRadius: '0.5rem',
+              padding: '0.5rem',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.9rem',
+              fontWeight: '600'
+            }}
+          >
+            <FiRefreshCw className={loading ? 'animate-spin' : ''} />
+            {t('common.refresh')}
+          </motion.button>
         </div>
         <div style={{ fontSize: '2.5rem', opacity: 0.3 }}>
           <FiCalendar />

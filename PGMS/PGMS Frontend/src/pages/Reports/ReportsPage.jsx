@@ -2,7 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiBarChart2, FiGrid, FiDollarSign, FiTrendingDown, FiCheckSquare, FiLayout } from 'react-icons/fi'
+import { FiBarChart2, FiGrid, FiDollarSign, FiTrendingDown, FiCheckSquare, FiLayout, FiClock } from 'react-icons/fi'
 
 export default function ReportsPage() {
   const navigate = useNavigate()
@@ -34,10 +34,10 @@ export default function ReportsPage() {
       path: '/reports/dues'
     },
     {
-      icon: FiLayout,
-      label: t('reports.occupancy.label'),
-      description: t('reports.occupancy.description'),
-      path: '/reports/occupancy'
+      icon: FiClock,
+      label: t('reports.logs.label'),
+      description: t('reports.logs.description'),
+      path: '/reports/logs'
     },
     {
       icon: FiDollarSign,

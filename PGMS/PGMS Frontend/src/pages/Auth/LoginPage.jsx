@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiArrowRight, FiEye, FiEyeOff, FiMail, FiX, FiLock } from 'react-icons/fi'
+import { FiArrowRight, FiEye, FiEyeOff, FiMail, FiX, FiLock, FiArrowLeft } from 'react-icons/fi'
 import { useAuth } from '../../hooks/useAuth'
 import { sendOtp, verifyOtp, resetPassword, sendLoginOtp, verifyLoginOtp } from '../../services/adminService'
 
@@ -334,6 +334,48 @@ export default function LoginPage() {
             ))}
           </motion.div>
         </motion.div>
+      </motion.div>
+
+      {/* Back Button */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.8, duration: 0.5 }}
+        style={{
+          position: 'absolute',
+          top: '2rem',
+          left: '2rem',
+          zIndex: 100,
+        }}
+      >
+        <Link
+          to="/"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            color: 'white',
+            textDecoration: 'none',
+            fontSize: '1rem',
+            fontWeight: '600',
+            padding: '0.6rem 1.2rem',
+            background: 'rgba(255, 255, 255, 0.15)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '0.75rem',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            transition: 'all 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)'
+            e.currentTarget.style.transform = 'translateX(-5px)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
+            e.currentTarget.style.transform = 'translateX(0)'
+          }}
+        >
+          <FiArrowLeft /> Back to Home
+        </Link>
       </motion.div>
 
       {/* Right Side - Form */}

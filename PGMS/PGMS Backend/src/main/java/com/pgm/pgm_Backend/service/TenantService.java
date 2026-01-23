@@ -17,5 +17,7 @@ public interface TenantService {
 
     void deleteTenant(Long id);
 
+    Tenant updateTenantStatus(Long id, String status);
+
     List<Tenant> getTenantsByStatus(String status);
 }

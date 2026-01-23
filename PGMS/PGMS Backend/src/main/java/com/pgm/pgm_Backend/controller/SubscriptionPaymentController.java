@@ -95,6 +95,55 @@ public class SubscriptionPaymentController {
     }
 
     /**
+     * Create a payment order for registration (GUEST ACCESS)
+     */
+    @PostMapping("/create-registration-order")
+    public ResponseEntity<?> createRegistrationOrder(@RequestBody Map<String, Object> orderData) {
+        try {
+            String planName = (String) orderData.get("planName");
+            Double amount = Double.parseDouble(orderData.get("amount").toString());
+
+            // Generate unique receipt ID
+            String receipt = "reg_" + System.currentTimeMillis();
+
+            // Create Razorpay order
+            JSONObject razorpayOrder = razorpayService.createOrder(amount, currency, receipt);
+
+            // Save payment order in database (with unique email since we don't have admin
+            // yet)
+            PaymentOrder paymentOrder = new PaymentOrder();
+            paymentOrder.setRazorpayOrderId(razorpayOrder.getString("id"));
+            paymentOrder.setAdminEmail("GUEST_" + receipt);
+            paymentOrder.setSubscriptionPlanName(planName);
+            paymentOrder.setAmount(amount);
+            paymentOrder.setCurrency(currency);
+            paymentOrder.setStatus("CREATED");
+
+            paymentOrderRepository.save(paymentOrder);
+
+            // Prepare response
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("razorpayOrderId", razorpayOrder.getString("id"));
+            response.put("amount", razorpayOrder.getInt("amount"));
+            response.put("currency", razorpayOrder.getString("currency"));
+            response.put("keyId", razorpayKeyId);
+
+            return ResponseEntity.ok(response);
+        } catch (RazorpayException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", "error");
+            errorResponse.put("message", "Failed to create payment order: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", "error");
+            errorResponse.put("message", "An error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
      * Verify payment and activate subscription
      */
     @PostMapping("/verify")

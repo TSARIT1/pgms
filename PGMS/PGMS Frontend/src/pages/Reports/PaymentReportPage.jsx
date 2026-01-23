@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FiSearch, FiArrowLeft, FiDollarSign, FiCalendar, FiFilter, FiDownload } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
-import { getAllStudents } from '../../services/studentService'
+import { getAllStudentsIncludingDeleted } from '../../services/studentService'
 import paymentService from '../../services/paymentService'
 import { useTranslation } from 'react-i18next'
 import { jsPDF } from 'jspdf'
@@ -16,6 +16,7 @@ export default function PaymentReportPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterMonth, setFilterMonth] = useState('All')
   const [filterMethod, setFilterMethod] = useState('All')
+  const [filterType, setFilterType] = useState('All')
 
   useEffect(() => {
     loadData()
@@ -25,8 +26,8 @@ export default function PaymentReportPage() {
     try {
       setLoading(true)
       const [paymentsResp, studentsResp] = await Promise.all([
-        paymentService.getAllPayments(),
-        getAllStudents()
+        paymentService.getAllPayments(true),
+        getAllStudentsIncludingDeleted()
       ])
 
       setPayments(paymentsResp.data || paymentsResp || [])
@@ -44,8 +45,11 @@ export default function PaymentReportPage() {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
   }))].sort().reverse()
 
-  // Get unique payment methods
-  const methods = [...new Set(payments.map(p => p.method || 'N/A').filter(Boolean))]
+  // Get unique payment methods (Standard + Existing)
+  const methods = [...new Set([
+    'Cash', 'UPI', 'Net Banking', 'Account', 'Other',
+    ...payments.map(p => p.method || 'N/A').filter(Boolean)
+  ])]
 
   const filteredPayments = payments.filter(payment => {
     const matchesSearch = 
@@ -57,8 +61,12 @@ export default function PaymentReportPage() {
     const matchesMonth = filterMonth === 'All' || paymentMonth === filterMonth
     
     const matchesMethod = filterMethod === 'All' || payment.method === filterMethod
+    
+    // Payment Type Filter
+    const paymentType = payment.paymentType || 'RENT_PAYMENT'
+    const matchesType = filterType === 'All' || paymentType === filterType
 
-    return matchesSearch && matchesMonth && matchesMethod
+    return matchesSearch && matchesMonth && matchesMethod && matchesType
   })
 
   const totalRevenue = filteredPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0)
@@ -112,11 +120,14 @@ export default function PaymentReportPage() {
       doc.setFillColor(102, 126, 234)
       doc.rect(14, 70, 182, 8, 'F')
       doc.setTextColor(255, 255, 255)
-      doc.text('Date', 16, 76)
-      doc.text('Student', 50, 76)
-      doc.text('Amount', 105, 76)
-      doc.text('Method', 135, 76)
-      doc.text('Description', 165, 76)
+      doc.text('Date', 14, 76)
+      doc.text('Student', 42, 76)
+      doc.text('Amount', 85, 76)
+      doc.text('GST %', 105, 76)
+      doc.text('GST Amt', 125, 76)
+      doc.text('Type', 145, 76)
+      doc.text('Method', 170, 76)
+      doc.text('Note', 190, 76)
       
       // Add table rows
       let yPos = 84
@@ -132,12 +143,27 @@ export default function PaymentReportPage() {
         }
         
         // Add payment data
-        const date = new Date(payment.paymentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-        doc.text(date, 16, yPos)
-        doc.text((payment.student || payment.studentName || '').substring(0, 15), 50, yPos)
-        doc.text(`Rs.${Number(payment.amount).toLocaleString()}`, 105, yPos)
-        doc.text((payment.method || 'N/A').substring(0, 10), 135, yPos)
-        doc.text((payment.description || '-').substring(0, 10), 165, yPos)
+        const date = new Date(payment.paymentDate).toLocaleString('en-US', { 
+          month: 'short', 
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit', 
+          minute: '2-digit'
+        })
+        
+        const totalAmount = Number(payment.amount)
+        const gstPercentage = payment.gstPercentage || 0
+        const baseAmount = totalAmount / (1 + (gstPercentage / 100))
+        const gstAmount = totalAmount - baseAmount
+
+        doc.text(date, 14, yPos)
+        doc.text((payment.student || payment.studentName || '').substring(0, 15), 42, yPos)
+        doc.text(`${Number(payment.amount).toLocaleString()}`, 85, yPos)
+        doc.text(`${gstPercentage}%`, 105, yPos)
+        doc.text(`${gstAmount.toFixed(2)}`, 125, yPos)
+        doc.text((payment.paymentType || 'RENT_PAYMENT').replace('_', ' ').substring(0, 15), 145, yPos)
+        doc.text((payment.method || 'N/A').substring(0, 10), 170, yPos)
+        doc.text((payment.description || '-').substring(0, 8), 190, yPos)
         
         yPos += 8
         
@@ -249,6 +275,22 @@ export default function PaymentReportPage() {
             }}
           />
         </div>
+
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          style={{
+            padding: '0.75rem 1rem',
+            border: '2px solid #e5e7eb',
+            borderRadius: '0.5rem',
+            fontSize: '0.95rem',
+            minWidth: '150px',
+          }}
+        >
+          <option value="All">All Types</option>
+          <option value="RENT_PAYMENT">Rent Payment</option>
+          <option value="ADVANCE_PAYMENT">Advance Payment</option>
+        </select>
 
         <select
           value={filterMonth}
@@ -425,6 +467,9 @@ export default function PaymentReportPage() {
                   <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>{t('paymentReport.date')}</th>
                   <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>{t('paymentReport.student')}</th>
                   <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>{t('paymentReport.amount')}</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>GST %</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>GST Amt</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Type</th>
                   <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>{t('paymentReport.method')}</th>
                   <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>{t('paymentReport.description')}</th>
                 </tr>
@@ -444,10 +489,12 @@ export default function PaymentReportPage() {
                       <td style={{ padding: '1rem', color: '#374151' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <FiCalendar size={14} style={{ color: '#6b7280' }} />
-                          {new Date(payment.paymentDate).toLocaleDateString('en-US', {
+                          {new Date(payment.paymentDate).toLocaleString('en-US', {
                             year: 'numeric',
                             month: 'short',
-                            day: 'numeric'
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
                           })}
                         </div>
                       </td>
@@ -463,6 +510,35 @@ export default function PaymentReportPage() {
                           fontSize: '1.125rem'
                         }}>
                           ₹{Number(payment.amount).toLocaleString()}
+                        </div>
+                      </td>
+                      <td style={{ padding: '1rem' }}>
+                        <div style={{ fontWeight: '600', color: '#4b5563' }}>
+                          {payment.gstPercentage ? `${payment.gstPercentage}%` : '0%'}
+                        </div>
+                      </td>
+                      <td style={{ padding: '1rem' }}>
+                        <div style={{ fontWeight: '600', color: '#4b5563' }}>
+                          ₹{(() => {
+                            const total = Number(payment.amount)
+                            const gst = payment.gstPercentage || 0
+                            const base = total / (1 + (gst / 100))
+                            return (total - base).toFixed(2)
+                          })()}
+                        </div>
+                      </td>
+                      <td style={{ padding: '1rem' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '0.25rem 0.75rem',
+                          borderRadius: '0.375rem',
+                          background: payment.paymentType === 'ADVANCE_PAYMENT' ? '#fdf2f8' : '#e0e7ff',
+                          color: payment.paymentType === 'ADVANCE_PAYMENT' ? '#be185d' : '#4338ca',
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                          textTransform: 'uppercase'
+                        }}>
+                          {(payment.paymentType || 'RENT_PAYMENT').replace('_', ' ')}
                         </div>
                       </td>
                       <td style={{ padding: '1rem' }}>

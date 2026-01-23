@@ -29,7 +29,7 @@ import RoomReportPage from './pages/Reports/RoomReportPage'
 import PaymentReportPage from './pages/Reports/PaymentReportPage'
 import DueSummaryReportPage from './pages/Reports/DueSummaryReportPage'
 import AttendanceReportPage from './pages/Reports/AttendanceReportPage'
-import RoomOccupancyReportPage from './pages/Reports/RoomOccupancyReportPage'
+import TotalLogReportPage from './pages/Reports/TotalLogReportPage'
 import RevenueReportPage from './pages/Reports/RevenueReportPage'
 import AdminProfilePage from './pages/Profile/AdminProfilePage'
 import SuperAdminDashboard from './pages/SuperAdmin/SuperAdminDashboard'
@@ -91,7 +91,7 @@ function App() {
           <Route path="reports/payments" element={<PaymentReportPage />} />
           <Route path="reports/dues" element={<DueSummaryReportPage />} />
           <Route path="reports/attendance" element={<AttendanceReportPage />} />
-          <Route path="reports/occupancy" element={<RoomOccupancyReportPage />} />
+          <Route path="reports/logs" element={<TotalLogReportPage />} />
           <Route path="reports/revenue" element={<RevenueReportPage />} />
           <Route path="profile" element={<AdminProfilePage />} />
         </Route>

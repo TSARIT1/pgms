@@ -159,22 +159,78 @@ export default function RoomListPage() {
         style={{
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           padding: "2rem",
-          borderRadius: "1rem",
+          borderRadius: "1.25rem",
           color: "white",
           marginBottom: "2rem",
-          boxShadow: "0 10px 30px rgba(102,126,234,0.2)",
+          boxShadow: "0 20px 60px rgba(102, 126, 234, 0.35)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        <div>
-          <h1 style={{ color: "white" }}>{t('rooms.title')}</h1>
-          <p style={{ color: "rgba(255,255,255,0.9)" }}>
+        {/* Gradient Decoration Blob */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            top: '-50%',
+            right: '-20%',
+            width: '400px',
+            height: '400px',
+            background: 'rgba(255, 255, 255, 0.15)',
+            borderRadius: '50%',
+            filter: 'blur(60px)',
+          }}
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 180, 0],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <motion.h1 
+            style={{ 
+              color: "white",
+              fontSize: '2.25rem',
+              fontWeight: '800',
+              marginBottom: '0.5rem',
+              textShadow: '0 2px 10px rgba(0,0,0,0.1)'
+            }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
             {t('rooms.title')}
+          </motion.h1>
+          <p style={{ color: "rgba(255,255,255,0.95)", fontSize: '1rem' }}>
+            Manage room allocations and availability
           </p>
         </div>
-        <FiGrid size={40} style={{ opacity: 0.3 }} />
+        <motion.div
+          style={{ 
+            fontSize: '4rem', 
+            opacity: 0.2,
+            position: 'relative',
+            zIndex: 1
+          }}
+          animate={{ 
+            rotate: [0, 5, -5, 0],
+            scale: [1, 1.05, 1]
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: 'easeInOut'
+          }}
+        >
+          <FiGrid />
+        </motion.div>
       </motion.div>
 
       {/* TOOLBAR */}
@@ -199,8 +255,31 @@ export default function RoomListPage() {
             onClick={loadRooms}
             className="btn btn-secondary"
             whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            disabled={loading}
+            style={{
+              padding: '0.75rem 1.5rem',
+              background: loading ? '#d1d5db' : 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+              color: loading ? 'white' : '#374151',
+              border: 'none',
+              borderRadius: '0.75rem',
+              fontSize: '0.95rem',
+              fontWeight: '600',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 4px 15px rgba(168, 237, 234, 0.3)',
+              transition: 'all 0.3s ease',
+            }}
           >
-            <FiRefreshCw /> Refresh
+            <motion.div
+              animate={{ rotate: loading ? 360 : 0 }}
+              transition={{ duration: 1, repeat: loading ? Infinity : 0, ease: 'linear' }}
+            >
+              <FiRefreshCw />
+            </motion.div>
+            {loading ? 'Loading...' : 'Refresh'}
           </motion.button>
         </div>
 
@@ -211,7 +290,22 @@ export default function RoomListPage() {
             setEditingRoom(null);
             setShowForm(true);
           }}
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, boxShadow: '0 8px 20px rgba(102, 126, 234, 0.5)' }}
+          whileTap={{ scale: 0.95 }}
+          style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            padding: '0.75rem 1.5rem',
+            color: 'white',
+            border: 'none',
+            borderRadius: '0.75rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.95rem',
+            boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+          }}
         >
           <FiPlus /> {t('rooms.addRoom')}
         </motion.button>
@@ -335,6 +429,7 @@ export default function RoomListPage() {
               style={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 borderRadius: '1rem 1rem 0 0',
+                boxShadow: '0 4px 20px rgba(102, 126, 234, 0.3)',
               }}
             >
               <h2 className="modal-title" style={{ color: 'white' }}>

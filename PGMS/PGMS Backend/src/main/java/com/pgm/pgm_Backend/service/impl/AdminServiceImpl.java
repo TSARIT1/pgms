@@ -6,6 +6,7 @@ import com.pgm.pgm_Backend.repository.AdminRepository;
 import com.pgm.pgm_Backend.repository.SubscriptionPlanRepository;
 import com.pgm.pgm_Backend.service.AdminService;
 import com.pgm.pgm_Backend.service.EmailService;
+import com.pgm.pgm_Backend.service.RazorpayService;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,14 +20,19 @@ public class AdminServiceImpl implements AdminService {
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final com.pgm.pgm_Backend.repository.SubscriptionPlanRepository subscriptionPlanRepository;
+    private final RazorpayService razorpayService;
+    private final com.pgm.pgm_Backend.repository.PaymentOrderRepository paymentOrderRepository;
 
     public AdminServiceImpl(AdminRepository adminRepository, PasswordEncoder passwordEncoder, EmailService emailService,
-            SubscriptionPlanRepository subscriptionPlanRepository) {
+            SubscriptionPlanRepository subscriptionPlanRepository, RazorpayService razorpayService,
+            com.pgm.pgm_Backend.repository.PaymentOrderRepository paymentOrderRepository) {
         super();
         this.adminRepository = adminRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.subscriptionPlanRepository = subscriptionPlanRepository;
+        this.razorpayService = razorpayService;
+        this.paymentOrderRepository = paymentOrderRepository;
     }
 
     @Override
@@ -73,12 +79,58 @@ public class AdminServiceImpl implements AdminService {
                     System.out.println("End Date: " + endDate);
                     System.out.println("========================================");
                 } else {
-                    // Paid plan - only store plan name, dates will be set after payment
+                    // Paid plan - must verify payment data
+                    if (admin.getRazorpayPaymentId() == null || admin.getRazorpayOrderId() == null
+                            || admin.getRazorpaySignature() == null) {
+                        throw new IllegalArgumentException("Payment details required for " + plan.getName());
+                    }
+
+                    // Verify signature
+                    boolean isValid = razorpayService.verifyPaymentSignature(
+                            admin.getRazorpayOrderId(),
+                            admin.getRazorpayPaymentId(),
+                            admin.getRazorpaySignature());
+
+                    if (!isValid) {
+                        throw new IllegalArgumentException("Invalid payment signature");
+                    }
+
+                    // Activate subscription
+                    java.time.LocalDateTime startDate = java.time.LocalDateTime.now();
+                    java.time.LocalDateTime endDate;
+
+                    if ("DAY".equalsIgnoreCase(plan.getDurationType())) {
+                        endDate = startDate.plusDays(plan.getDuration());
+                    } else if ("MONTH".equalsIgnoreCase(plan.getDurationType())) {
+                        endDate = startDate.plusMonths(plan.getDuration());
+                    } else {
+                        endDate = startDate.plusMonths(1);
+                    }
+
+                    admin.setSubscriptionStartDate(startDate);
+                    admin.setSubscriptionEndDate(endDate);
+
+                    // Update payment order in DB if exists (it should, as we create it during order
+                    // creation)
+                    java.util.Optional<com.pgm.pgm_Backend.model.PaymentOrder> orderOpt = paymentOrderRepository
+                            .findByRazorpayOrderId(admin.getRazorpayOrderId());
+                    if (orderOpt.isPresent()) {
+                        com.pgm.pgm_Backend.model.PaymentOrder order = orderOpt.get();
+                        order.setStatus("PAID");
+                        order.setAdminEmail(admin.getEmail()); // Link to actual admin email
+                        order.setRazorpayPaymentId(admin.getRazorpayPaymentId());
+                        order.setRazorpaySignature(admin.getRazorpaySignature());
+                        order.setPaidAt(java.time.LocalDateTime.now());
+                        paymentOrderRepository.save(order);
+                    }
+
                     System.out.println("========================================");
-                    System.out.println("Paid Subscription Plan Selected:");
+                    System.out.println("PAID Subscription Plan Activated:");
                     System.out.println("Plan: " + plan.getName());
                     System.out.println("Price: ₹" + plan.getPrice());
-                    System.out.println("Status: Awaiting payment on dashboard");
+                    System.out.println("Payment ID: " + admin.getRazorpayPaymentId());
+                    System.out.println("Start Date: " + startDate);
+                    System.out.println("End Date: " + endDate);
                     System.out.println("========================================");
                 }
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 
-export default function DataTable({ columns, data, onView, onEdit, onDelete, onDownload, onSelectChange, highlightRows = [] }) {
+export default function DataTable({ columns, data, onView, onEdit, onDelete, onDownload, onSelectChange, customRender, highlightRows = [] }) {
   const [selectedRows, setSelectedRows] = useState([])
   
   const rowVariants = {
@@ -92,7 +92,11 @@ export default function DataTable({ columns, data, onView, onEdit, onDelete, onD
                     </td>
                   )}
                   {columns.map((col) => (
-                    <td key={`${idx}-${col}`}>{row[col] || '-'}</td>
+                    <td key={`${idx}-${col}`}>
+                      {customRender && customRender[col]
+                          ? customRender[col](row)
+                          : (row[col] !== undefined && row[col] !== null && row[col] !== '') ? row[col] : '-'}
+                    </td>
                   ))}
                   {(onView || onEdit || onDelete || onDownload) && (
                     <td>

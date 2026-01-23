@@ -139,8 +139,8 @@ export default function AdminProfilePage() {
       return
     }
 
-    if (hostelPhotos.length >= 4) {
-      setError('Maximum 4 photos allowed')
+    if (hostelPhotos.length >= 8) {
+      setError('Maximum 8 photos allowed')
       return
     }
 
@@ -721,7 +721,7 @@ export default function AdminProfilePage() {
                 <div className="section-header">
                   <FiImage className="section-icon" />
                   <h3>{t('profile.pgHostelPhotos')}</h3>
-                  <span className="photo-count">{hostelPhotos.length}/4</span>
+                  <span className="photo-count">{hostelPhotos.length}/8</span>
                 </div>
                 
                 <div className="hostel-photos-grid">
@@ -740,7 +740,7 @@ export default function AdminProfilePage() {
                   ))}
                   
                   {/* Add Photo Button in Edit Mode */}
-                  {isEditMode && hostelPhotos.length < 4 && (
+                  {isEditMode && hostelPhotos.length < 8 && (
                     <div 
                       className="hostel-photo-item add-photo-placeholder"
                       onClick={() => hostelPhotoInputRef.current?.click()}

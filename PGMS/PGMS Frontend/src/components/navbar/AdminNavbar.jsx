@@ -92,6 +92,8 @@ export default function AdminNavbar() {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
+            fontSize: '1.35rem',
+            fontWeight: '800',
           }}
         >
           {t('common.appName')}
@@ -153,7 +155,7 @@ export default function AdminNavbar() {
             fontWeight: '600',
             fontSize: '0.95rem',
             cursor: 'pointer',
-            boxShadow: '0 4px 6px rgba(239, 68, 68, 0.3)',
+            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)',
             transition: 'all 0.3s ease',
           }}
         >

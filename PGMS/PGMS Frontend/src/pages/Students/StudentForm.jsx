@@ -325,7 +325,17 @@ export default function StudentForm({ student, onSubmit }) {
             name="Room"
             className="form-select"
             value={formData.Room}
-            onChange={handleChange}
+            onChange={(e) => {
+              const val = e.target.value;
+              const selectedRoom = rooms.find(r => r.roomNumber === val);
+              
+              setFormData(prev => ({
+                ...prev,
+                Room: val,
+                // If capacity is 1, auto-select bed 1, else reset bed selection
+                BedNumber: (selectedRoom && Number(selectedRoom.capacity) === 1) ? 1 : null
+              }));
+            }}
             required
             style={inputStyle}
             onFocus={handleInputFocus}
@@ -355,7 +365,7 @@ export default function StudentForm({ student, onSubmit }) {
           {/* Bed Availability Indicator */}
           {formData.Room && rooms && (() => {
             const selectedRoom = rooms.find(r => r.roomNumber === formData.Room)
-            if (!selectedRoom) return null
+            if (!selectedRoom || selectedRoom.capacity === null || selectedRoom.capacity === undefined) return null
             
             const availableBeds = (selectedRoom.capacity || 0) - (selectedRoom.occupiedBeds || 0)
             const occupancyPercentage = selectedRoom.capacity > 0 
@@ -416,7 +426,8 @@ export default function StudentForm({ student, onSubmit }) {
           {/* Bed Selection Button */}
           {formData.Room && (() => {
             const selectedRoom = rooms.find(r => r.roomNumber === formData.Room)
-            if (!selectedRoom || selectedRoom.capacity <= 1) return null
+            // Hide button if capacity is null/undefined or if no beds exist (capacity 0)
+            if (!selectedRoom || selectedRoom.capacity === null || selectedRoom.capacity === undefined || Number(selectedRoom.capacity) < 1) return null
             
             return (
               <motion.div

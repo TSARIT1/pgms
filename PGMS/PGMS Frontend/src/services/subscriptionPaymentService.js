@@ -6,7 +6,10 @@ const API_URL = '/subscription-payment';
  * Create a payment order for subscription
  */
 export const createPaymentOrder = async (planData) => {
-    return await apiPost(`${API_URL}/create-order`, planData);
+    const url = planData.isRegistration
+        ? `${API_URL}/create-registration-order`
+        : `${API_URL}/create-order`;
+    return await apiPost(url, planData);
 };
 
 /**

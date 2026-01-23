@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FiArrowRight, FiEye, FiEyeOff, FiCheck } from 'react-icons/fi'
+import { FiArrowRight, FiEye, FiEyeOff, FiCheck, FiArrowLeft, FiShoppingBag } from 'react-icons/fi'
 import { FaGoogle, FaFacebook } from 'react-icons/fa'
 import { useAuth } from '../../hooks/useAuth'
+import { createPaymentOrder } from '../../services/subscriptionPaymentService'
+import { getActivePlans } from '../../services/subscriptionService'
+import PlanSelectionModal from '../../components/subscription/PlanSelectionModal'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -13,6 +16,9 @@ export default function RegisterPage() {
   // Get selected plan from URL parameters
   const selectedPlan = searchParams.get('plan')
   const selectedPlanId = searchParams.get('planId')
+  
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
+  const [selectedPlanName, setSelectedPlanName] = useState(selectedPlan || '')
   
   const [formData, setFormData] = useState({
     name: '',
@@ -24,10 +30,27 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     referredBy: '',
+    planId: selectedPlanId || null,
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [localError, setLocalError] = useState('')
+  const [isPaymentProcessing, setIsPaymentProcessing] = useState(false)
+  const [paymentData, setPaymentData] = useState(null)
+  const [plans, setPlans] = useState([])
+
+  useEffect(() => {
+    fetchPlans()
+  }, [])
+
+  const fetchPlans = async () => {
+    try {
+      const allPlans = await getActivePlans()
+      setPlans(allPlans)
+    } catch (err) {
+      console.error('Error fetching plans:', err)
+    }
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -63,7 +86,7 @@ export default function RegisterPage() {
     }
 
     try {
-      await register({
+      const registrationPayload = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -72,13 +95,45 @@ export default function RegisterPage() {
         hostelAddress: formData.hostelAddress,
         password: formData.password,
         referredBy: formData.referredBy || null,
-        planId: selectedPlanId ? parseInt(selectedPlanId) : null,
-      })
+        planId: formData.planId ? parseInt(formData.planId) : null,
+      }
+
+      // Add payment details if it was a paid plan
+      if (paymentData) {
+        registrationPayload.razorpayPaymentId = paymentData.razorpay_payment_id
+        registrationPayload.razorpayOrderId = paymentData.razorpay_order_id
+        registrationPayload.razorpaySignature = paymentData.razorpay_signature
+      }
+
+      await register(registrationPayload)
       // Redirect to login page after successful registration
       navigate('/login')
     } catch (err) {
       setLocalError(err.message || 'Registration failed!')
     }
+  }
+
+  const handleSelectPlan = (plan, paymentDetails = null) => {
+    setFormData((prev) => ({
+      ...prev,
+      planId: plan.id.toString(),
+    }))
+    setSelectedPlanName(plan.name)
+    if (paymentDetails) {
+      setPaymentData(paymentDetails)
+    }
+  }
+
+  const isFormValid = () => {
+    const requiredFields = ['name', 'email', 'phone', 'hostelName', 'hostelAddress', 'password', 'planId']
+    const hasAllFields = requiredFields.every(field => formData[field])
+    
+    // If paid plan, must have payment data
+    const selectedPlanObj = plans.find(p => p.id === parseInt(formData.planId))
+    const needsPayment = selectedPlanObj && selectedPlanObj.priceNumeric > 0
+    const hasPayment = !!paymentData
+
+    return hasAllFields && (!needsPayment || hasPayment)
   }
 
   const containerVariants = {
@@ -219,6 +274,48 @@ export default function RegisterPage() {
         </motion.div>
       </motion.div>
 
+      {/* Back Button */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.6, duration: 0.5 }}
+        style={{
+          position: 'absolute',
+          top: '2rem',
+          left: '2rem',
+          zIndex: 100,
+        }}
+      >
+        <Link
+          to="/"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            color: 'white',
+            textDecoration: 'none',
+            fontSize: '1rem',
+            fontWeight: '600',
+            padding: '0.6rem 1.2rem',
+            background: 'rgba(255, 255, 255, 0.15)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '0.75rem',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            transition: 'all 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)'
+            e.currentTarget.style.transform = 'translateX(-5px)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
+            e.currentTarget.style.transform = 'translateX(0)'
+          }}
+        >
+          <FiArrowLeft /> Back to Home
+        </Link>
+      </motion.div>
+
       {/* Right Side - Form */}
       <motion.div
         variants={formVariants}
@@ -232,46 +329,6 @@ export default function RegisterPage() {
         }}
       >
         <div style={{ width: '100%', maxWidth: '380px' }}>
-          {/* Selected Plan Badge */}
-          {selectedPlan && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              style={{
-                marginBottom: '1.5rem',
-                padding: '1rem 1.25rem',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                borderRadius: '0.75rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-              }}
-            >
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <FiCheck size={20} color="white" strokeWidth={3} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.9)', fontWeight: '600' }}>
-                  Selected Plan
-                </div>
-                <div style={{ fontSize: '1rem', color: 'white', fontWeight: '700' }}>
-                  {selectedPlan}
-                </div>
-              </div>
-            </motion.div>
-          )}
           
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -711,31 +768,105 @@ export default function RegisterPage() {
               />
             </motion.div>
 
+
+            {/* Select Plan Button */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              style={{ marginBottom: '1.5rem' }}
+            >
+              <button
+                type="button"
+                onClick={() => setIsPlanModalOpen(true)}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  background: 'white',
+                  border: '2px dashed #3b82f6',
+                  borderRadius: '0.75rem',
+                  color: '#3b82f6',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.75rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f0f7ff'
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white'
+                  e.currentTarget.style.transform = 'translateY(0)'
+                }}
+              >
+                <FiShoppingBag /> {selectedPlanName ? 'Change Subscription Plan' : 'Select Subscription Plan'}
+              </button>
+            </motion.div>
+
+            {/* Selected Plan Badge */}
+            {selectedPlanName && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                style={{
+                  marginBottom: '1.5rem',
+                  padding: '1rem 1.25rem',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                  borderRadius: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)',
+                  color: 'white',
+                }}
+              >
+                <div style={{
+                  width: '35px',
+                  height: '35px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <FiCheck size={20} strokeWidth={3} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.75rem', opacity: 0.9, fontWeight: '600' }}>ACTIVE SELECTION</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: '800' }}>{selectedPlanName}</div>
+                </div>
+              </motion.div>
+            )}
+
             {/* Register Button */}
             <motion.button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isFormValid()}
               custom={9}
               variants={inputVariants}
               initial="hidden"
               animate="visible"
-              whileHover={{ scale: !loading ? 1.02 : 1 }}
-              whileTap={{ scale: !loading ? 0.98 : 1 }}
+              whileHover={{ scale: !(loading || !isFormValid()) ? 1.02 : 1 }}
+              whileTap={{ scale: !(loading || !isFormValid()) ? 0.98 : 1 }}
               style={{
                 width: '100%',
                 padding: '0.75rem',
-                background: loading ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                background: (loading || !isFormValid()) ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '0.5rem',
                 fontSize: '1rem',
                 fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
+                cursor: (loading || !isFormValid()) ? 'not-allowed' : 'pointer',
                 transition: 'all 0.3s ease',
                 marginTop: '1.5rem',
               }}
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? 'Creating Account...' : (paymentData ? 'Register Account' : 'Create Account')}
             </motion.button>
           </motion.form>
 
@@ -771,6 +902,17 @@ export default function RegisterPage() {
           }
         }
       `}</style>
+      <PlanSelectionModal
+        isOpen={isPlanModalOpen}
+        onClose={() => setIsPlanModalOpen(false)}
+        onSelectPlan={handleSelectPlan}
+        selectedPlanId={formData.planId}
+        userInfo={{
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone
+        }}
+      />
     </motion.div>
   )
 }

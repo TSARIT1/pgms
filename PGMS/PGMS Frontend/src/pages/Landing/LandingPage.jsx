@@ -29,10 +29,40 @@ export default function LandingPage() {
   const [adminLoginLoading, setAdminLoginLoading] = useState(false)
   
   // SuperAdmin Login OTP States
+  // SuperAdmin Login OTP States
   const [showAdminOtpModal, setShowAdminOtpModal] = useState(false)
   const [adminLoginOtp, setAdminLoginOtp] = useState('')
   const [adminOtpError, setAdminOtpError] = useState('')
   const [adminOtpLoading, setAdminOtpLoading] = useState(false)
+
+  // Lightbox State
+  const [lightboxIndex, setLightboxIndex] = useState(null)
+
+  const openLightbox = (index) => setLightboxIndex(index)
+  const closeLightbox = () => setLightboxIndex(null)
+  
+  const nextPhoto = (e) => {
+    e?.stopPropagation()
+    setLightboxIndex((prev) => (prev + 1) % selectedHostelPhotos.length)
+  }
+  
+  const prevPhoto = (e) => {
+    e?.stopPropagation()
+    setLightboxIndex((prev) => (prev - 1 + selectedHostelPhotos.length) % selectedHostelPhotos.length)
+  }
+
+  // Handle keyboard navigation for lightbox
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (lightboxIndex !== null) {
+        if (e.key === 'ArrowRight') nextPhoto()
+        if (e.key === 'ArrowLeft') prevPhoto()
+        if (e.key === 'Escape') closeLightbox()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [lightboxIndex])
 
   // Background images array
   const backgroundImages = [
@@ -1717,7 +1747,7 @@ export default function LandingPage() {
               {
                 icon: FiPhone,
                 title: 'Phone',
-                content: '+91 94913 01258, +91 81426 16767',
+                content: ['+91 94913 01258', '+91 81426 16767'],
               },
               {
                 icon: FiMail,
@@ -1746,7 +1776,15 @@ export default function LandingPage() {
                   <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '0.5rem', color: '#111827' }}>
                     {info.title}
                   </h3>
-                  <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>{info.content}</p>
+                  <p style={{ color: '#6b7280', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                    {Array.isArray(info.content) ? (
+                      info.content.map((item, i) => (
+                        <span key={i} style={{ display: 'block' }}>{item}</span>
+                      ))
+                    ) : (
+                      info.content
+                    )}
+                  </p>
                 </motion.div>
               )
             })}
@@ -1831,7 +1869,7 @@ export default function LandingPage() {
             style={{
               backgroundColor: 'white',
               borderRadius: '1rem',
-              maxWidth: '900px',
+              maxWidth: '90vw', // Widen the modal
               width: '100%',
               maxHeight: '90vh',
               overflow: 'auto',
@@ -1852,7 +1890,7 @@ export default function LandingPage() {
                 fontWeight: '700',
                 color: '#111827',
               }}>
-                {selectedHostelName} - Photos
+                {selectedHostelName} - Photos ({selectedHostelPhotos.length})
               </h3>
               <button
                 onClick={() => setIsPhotoModalOpen(false)}
@@ -1879,10 +1917,26 @@ export default function LandingPage() {
               {selectedHostelPhotos.map((photo, index) => (
                 <div
                   key={index}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    console.log('Opening lightbox for index:', index)
+                    openLightbox(index)
+                  }}
                   style={{
                     borderRadius: '0.5rem',
                     overflow: 'hidden',
                     boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s',
+                    border: '2px solid transparent',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.02)'
+                    e.currentTarget.style.borderColor = '#3b82f6'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)'
+                    e.currentTarget.style.borderColor = 'transparent'
                   }}
                 >
                   <img
@@ -1892,14 +1946,141 @@ export default function LandingPage() {
                       width: '100%',
                       height: '200px',
                       objectFit: 'cover',
+                      display: 'block',
                     }}
                   />
+                  <div style={{
+                    padding: '0.5rem',
+                    textAlign: 'center',
+                    backgroundColor: 'rgba(0,0,0,0.05)',
+                    fontSize: '0.875rem',
+                    color: '#4b5563',
+                  }}>
+                    Click to view full screen
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
       )}
+
+      {/* Lightbox Viewer */}
+      <AnimatePresence>
+        {lightboxIndex !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              zIndex: 10000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onClick={closeLightbox}
+          >
+            <button
+              onClick={closeLightbox}
+              style={{
+                position: 'absolute',
+                top: '2rem',
+                right: '2rem',
+                background: 'transparent',
+                border: 'none',
+                color: 'white',
+                fontSize: '2rem',
+                cursor: 'pointer',
+                zIndex: 100001,
+              }}
+            >
+              <FiX />
+            </button>
+
+            <button
+              onClick={prevPhoto}
+              style={{
+                position: 'absolute',
+                left: '2rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: 'none',
+                color: 'white',
+                fontSize: '2rem',
+                padding: '1rem',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background 0.3s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+            >
+              <FiChevronLeft />
+            </button>
+
+            <motion.img
+              key={lightboxIndex}
+              src={`http://localhost:8080${selectedHostelPhotos[lightboxIndex]}`}
+              alt={`Full screen view ${lightboxIndex + 1}`}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              style={{
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+                objectFit: 'contain',
+                borderRadius: '0.5rem',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            <button
+              onClick={nextPhoto}
+              style={{
+                position: 'absolute',
+                right: '2rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: 'none',
+                color: 'white',
+                fontSize: '2rem',
+                padding: '1rem',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background 0.3s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+            >
+              <FiChevronRight />
+            </button>
+
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '2rem',
+                background: 'rgba(0, 0, 0, 0.5)',
+                padding: '0.5rem 1rem',
+                borderRadius: '9999px',
+                color: 'white',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+              }}
+            >
+              {lightboxIndex + 1} / {selectedHostelPhotos.length}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* SuperAdmin Login Modal */}
       <AnimatePresence>

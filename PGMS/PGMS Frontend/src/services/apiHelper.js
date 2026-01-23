@@ -84,6 +84,10 @@ export const apiPost = (endpoint, data, params = {}) =>
 export const apiPut = (endpoint, data, params = {}) =>
   apiCall('PUT', endpoint, data, params);
 
+// PATCH request
+export const apiPatch = (endpoint, data, params = {}) =>
+  apiCall('PATCH', endpoint, data, params);
+
 // DELETE request
 export const apiDelete = (endpoint, params = {}) =>
   apiCall('DELETE', endpoint, null, params);

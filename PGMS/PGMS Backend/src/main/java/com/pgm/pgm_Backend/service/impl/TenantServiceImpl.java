@@ -55,11 +55,23 @@ public class TenantServiceImpl implements TenantService {
             throw new IllegalArgumentException("Phone number already exists");
         }
 
+        // Auto-assign bed if room is provided but bed is not
+        if (tenant.getRoomNumber() != null && tenant.getBedNumber() == null) {
+            try {
+                Integer autoBed = roomService.findFirstAvailableBed(tenant.getRoomNumber());
+                if (autoBed != null) {
+                    tenant.setBedNumber(autoBed);
+                }
+            } catch (Exception e) {
+                // Ignore errors in auto-assignment, occupant count will still be synced
+            }
+        }
+
         Tenant savedTenant = dynamicTenantRepository.save(adminId, tenant);
 
-        // Update room's occupied beds if bed number is assigned
-        if (savedTenant.getBedNumber() != null && savedTenant.getRoomNumber() != null) {
-            roomService.addOccupiedBed(savedTenant.getRoomNumber(), savedTenant.getBedNumber());
+        // Sync room occupancy
+        if (savedTenant.getRoomNumber() != null) {
+            roomService.syncRoomOccupancy(savedTenant.getRoomNumber());
         }
 
         return savedTenant;
@@ -117,18 +129,25 @@ public class TenantServiceImpl implements TenantService {
 
         Tenant updatedTenant = dynamicTenantRepository.save(adminId, tenant);
 
-        // Update room occupancy if room or bed changed
+        // Sync room occupancy if room or bed changed
         boolean roomChanged = !oldRoomNumber.equals(updatedTenant.getRoomNumber());
-        boolean bedChanged = oldBedNumber != null && !oldBedNumber.equals(updatedTenant.getBedNumber());
+        boolean bedChanged = (oldBedNumber == null && updatedTenant.getBedNumber() != null) ||
+                (oldBedNumber != null && !oldBedNumber.equals(updatedTenant.getBedNumber()));
 
         if (roomChanged || bedChanged) {
-            // Remove from old bed
-            if (oldBedNumber != null && oldRoomNumber != null) {
-                roomService.removeOccupiedBed(oldRoomNumber, oldBedNumber);
+            // Sync old room
+            if (oldRoomNumber != null) {
+                try {
+                    roomService.syncRoomOccupancy(oldRoomNumber);
+                } catch (Exception e) {
+                    /* ignore */ }
             }
-            // Add to new bed
-            if (updatedTenant.getBedNumber() != null && updatedTenant.getRoomNumber() != null) {
-                roomService.addOccupiedBed(updatedTenant.getRoomNumber(), updatedTenant.getBedNumber());
+            // Sync new room
+            if (updatedTenant.getRoomNumber() != null) {
+                try {
+                    roomService.syncRoomOccupancy(updatedTenant.getRoomNumber());
+                } catch (Exception e) {
+                    /* ignore */ }
             }
         }
 
@@ -140,14 +159,14 @@ public class TenantServiceImpl implements TenantService {
         Long adminId = adminContextUtil.getCurrentAdminId();
         Tenant tenant = getTenantById(id);
 
-        // Free up the bed before soft deleting
-        if (tenant.getBedNumber() != null && tenant.getRoomNumber() != null) {
-            roomService.removeOccupiedBed(tenant.getRoomNumber(), tenant.getBedNumber());
-        }
-
         // Soft delete: mark as deleted instead of removing from database
         tenant.setIsDeleted(true);
         dynamicTenantRepository.save(adminId, tenant);
+
+        // Sync room occupancy after deletion
+        if (tenant.getRoomNumber() != null) {
+            roomService.syncRoomOccupancy(tenant.getRoomNumber());
+        }
     }
 
     @Override
@@ -157,5 +176,13 @@ public class TenantServiceImpl implements TenantService {
         return dynamicTenantRepository.findAll(adminId).stream()
                 .filter(t -> status.equals(t.getStatus()))
                 .toList();
+    }
+
+    @Override
+    public Tenant updateTenantStatus(Long id, String status) {
+        Long adminId = adminContextUtil.getCurrentAdminId();
+        Tenant tenant = getTenantById(id);
+        tenant.setStatus(status);
+        return dynamicTenantRepository.save(adminId, tenant);
     }
 }

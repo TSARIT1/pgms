@@ -29,6 +29,7 @@ public class PaymentRowMapper implements RowMapper<Payment> {
         payment.setTransactionDetails(rs.getString("transaction_details"));
         payment.setGstPercentage(rs.getDouble("gst_percentage"));
         payment.setPaymentType(rs.getString("payment_type"));
+        payment.setIsDeleted(rs.getBoolean("is_deleted"));
 
         // Handle timestamps
         if (rs.getTimestamp("created_at") != null) {
